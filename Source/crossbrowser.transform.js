@@ -7,7 +7,7 @@ stripComments based on http://james.padolsey.com/javascript/javascript-comment-r
 
 var CrossBrowser = new Class({
 	initialize: function(){
-		if (Browser.Engine.trident) this.ieLoop(); // In IE, unrecognized rules can be accessed w/o using AJAX.
+		//if (Browser.Engine.trident) this.ieLoop(); // In IE, unrecognized rules can be accessed w/o using AJAX.
 		this.loadStylesheets();
     }
 	
@@ -58,7 +58,7 @@ CrossBrowser.implement({
 	parse: function(css,sheet){
 		
 		sheet = document.styleSheets[sheet];
-		var styles = '', style, parts, rule, add
+		var add, rule, parts, style, styles = '' 
 			, self = this
 			, regexs = this.parseVariables.regexs
 			, classes = this.parseVariables.classes
@@ -186,6 +186,30 @@ CrossBrowser.implement({
 			//, '-ms-filter': filter
 		});
 	}
+	
+	,rotate: function(angle, origin){
+		var rad = angle * Math.PI / 180
+			, cos = Math.cos(rad)
+			, sin = Math.sin(rad)
+			, a = cos
+			, b = -sin
+			, c = sin
+			, d = cos;
+		
+		this.element.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={b}, M21={c}, M22={d}, SizingMethod="auto expand")'.substitute({a:a,b:b,c:c,d:d}));
+		var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin.y-1, left:origin.x-1, 'line-height':1, overflow:'hidden'}}).inject(this.element);
+		origin = origin || {x:0,y:0};
+		
+		//result *= matrix; [origin.x,origin.y]	* [[a,c],[b,d]]
+		var centerX = this.element.clientWidth / 2 - origin.x
+			, centerY = this.element.clientHeight / 2 - origin.y
+			, cx = centerX * a + centerY * b + origin.x
+			, cy = centerX * c + centerY * d + origin.y;
+						
+		this.element.style.top += cy - this.element.offsetHeight / 2;
+		this.element.style.left += cx - this.element.offsetWidth / 2;
+	}	
+	
 });
 
 window.addEvent('domready', function(){
