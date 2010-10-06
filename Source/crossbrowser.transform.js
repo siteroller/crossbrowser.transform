@@ -194,18 +194,18 @@ CrossBrowser.implement({
 			, cos = Math.cos(rad)
 			, sin = Math.sin(rad)
 			, a = cos
-			, b = -sin
-			, c = sin
+			, b = sin
+			, c = -sin
 			, d = cos;
 			
-		this.element.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={b}, M21={c}, M22={d}, SizingMethod="auto expand")'.substitute({a:a,b:b,c:c,d:d}));
+		this.element.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:a,b:b,c:c,d:d}));
 		var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(this.element);
 		
 		//result *= matrix; [origin.x,origin.y]	* [[a,c],[b,d]]
 		var centerX = this.element.clientWidth / 2 - origin[0]
 			, centerY = this.element.clientHeight / 2 - origin[1]
-			, cx = centerX * a + centerY * b + origin[0]
-			, cy = centerX * c + centerY * d + origin[1];
+			, cx = centerX * a + centerY * c + origin[0]
+			, cy = centerX * b + centerY * d + origin[1];
 						
 		this.element.style.top += cy - this.element.offsetHeight / 2;
 		this.element.style.left += cx - this.element.offsetWidth / 2;
