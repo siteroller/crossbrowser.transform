@@ -13,7 +13,7 @@ var CrossBrowser = new Class({
 	
 	, loopstop: 0
 	
-	loadStylesheets: function(){
+	, loadStylesheets: function(){
 		var self = this;
 		$$('style').each(function(el,i){
 			self.parse(el.get('html'),i);
@@ -40,7 +40,7 @@ var CrossBrowser = new Class({
 	}
 });
 
-var CrossBrowser.implement({
+CrossBrowser.implement({
 
 	parseVariables: {
 		classes: {
@@ -189,5 +189,5 @@ var CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new crossBrowser();
+	new CrossBrowser();
 });
