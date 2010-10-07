@@ -180,9 +180,8 @@ CrossBrowser.implement({
 	}
 	, scale: function(el, sx, sy, origin){
 		if (!sy) sy = sx;
-		if (!Browser.Engine.trident) return this.transform('scale', el, [sx, sy], matrix, origin);
 		var matrix = [sx, 0, 0, sy, 0, 0];
-		return this.ieMatrix2(el, origin);
+		return this.transform('scale', el, [sx, sy], matrix, origin);
 	}
 	, scaleX: function(el, sx, origin){
 		return this.scale(el, sx, 1, origin);
@@ -232,15 +231,15 @@ CrossBrowser.implement({
 	, ieMatrix2: function(el, matrix, origin){
 		origin = origin || [50,50];
 		el.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]}));
-		if (true) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
+		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1]
 			, X = x * matrix[0] + y * matrix[2] + origin[0]
 			, Y = x * matrix[1] + y * matrix[3] + origin[1];
 		
-		el.style.left = parseInt(el.style.left||0) + X - el.offsetWidth / 2 + matrix[4];
-		el.style.top = parseInt(el.style.top||0) + Y - el.offsetHeight / 2 + matrix[5];
+		el.style.left = X - el.offsetWidth / 2 + matrix[4]; //parseInt(el.style.left||0) + 
+		el.style.top =  Y - el.offsetHeight / 2 + matrix[5];//parseInt(el.style.top||0) +
 		return this;
 	}
 	, ieMatrix: function(el,entries,h,w){
@@ -273,6 +272,6 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45,[0,0]);
-	//.rotate($('rot'),25)//.translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
+	new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]);
+	////.translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
 });
