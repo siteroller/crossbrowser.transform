@@ -1,8 +1,9 @@
 /*
 Credits: 
 stripComments based on http://james.padolsey.com/javascript/javascript-comment-removal-revisted, linked to in cssSandpaper.
-
-
+IEMatrix functions are based on: 
+	http://extremelysatisfactorytotalitarianism.com/blog/?p=922#theCode
+	http://someguynameddylan.com/lab/transform-origin-in-internet-explorer.php
 */
 
 var CrossBrowser = new Class({
@@ -160,8 +161,6 @@ CrossBrowser.implement({
 	},
 	
 	ieMatrix: function(el,entries,h,w){
-	//ieMatrix: function(el,a,b,c,d,e,f,h,w){
-		// Based on http://extremelysatisfactorytotalitarianism.com/blog/?p=922#theCode
 		if (!h){
 			var size = el.getCoordinates();
 			h = size.height / 2;
@@ -170,13 +169,11 @@ CrossBrowser.implement({
 			y = size.top;
 		}
 		
-		// linear transforms via Matrix Filter, adjusted for -transform-origin [ToDo: Is now hard set to center.]
 		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
 			, filter = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
 			, sx = Math.abs(c) * h + (Math.abs(a) - 1) * w
 			, sy = Math.abs(b) * w + (Math.abs(d) - 1) * h;
 
-		// translation. Rounding doesn't fully eliminate integer jittering.
 		el.setStyles({
 			left: Math.round(x + e - sx)
 			, top: Math.round(y + f - sy)
@@ -187,34 +184,39 @@ CrossBrowser.implement({
 		});
 	}
 	, translate: function(el, tx, ty, origin){
+		if (!Browser.Engine.trident) return this.transform('translate', el, tx, ty, origin);
 		var matrix = [1, 0, 0, 1, tx || 0 , ty || 0];
 		this.matrix(el, matrix, origin);
 	}
 	, rotate: function(el, angle, origin){
+		if (!Browser.Engine.trident) return this.transform('rotate', el, angle + 'deg', origin);
 		var rad = angle * 0.0174532925 // Math.PI / 180
 			, cos = Math.cos(rad)
 			, sin = Math.sin(rad)
 			, matrix = [cos, sin, -sin, cos, 0, 0];
-		
-		this.matrix(el, matrix, origin);
+		return this.ieMatrix2(el, matrix, origin);		
+	}
+	, matrix: function(el, matrix, origin){
+		Browser.Engine.trident 
+			? this.ieMatrix2(el, matrix, origin) 
+			: this.transform(el, 'matrix', matrix, origin);
 		return this;
 	}
-	
-	, matrix: function(el, matrix, origin){
+	, transform: function(transform, el, args, origin){
 		var pre;
-		origin = origin || [50,50]; 
+		origin = origin || [50,50];
 		switch (Browser.Engine.name){
-			case 'trident': return this.ieMatrix2(el, matrix, origin);
 			case 'webkit': pre = '-webkit'; break;
 			case 'gecko' : pre = '-moz'; break;
 			case 'opera' : pre = '-o';
 		}
-		el.setStyle(pre + '-transform','matrix(' + matrix + ')');
+
+		el.setStyle(pre + '-transform', transform + '(' + args + ')');
 		el.setStyle(pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
+		return this;
 	}
-	
 	, ieMatrix2: function(el, matrix, origin){
-		
+		origin = origin || [50,50];
 		el.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]}));
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 
@@ -225,7 +227,7 @@ CrossBrowser.implement({
 		
 		el.style.left = parseInt(el.style.left||0) + X - el.offsetWidth / 2 + matrix[4];
 		el.style.top = parseInt(el.style.top||0) + Y - el.offsetHeight / 2 + matrix[5];
-
+		return this;
 	}, convert: function(){
 	
 	
@@ -233,5 +235,5 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50,0);
+	new CrossBrowser().rotate($('rot'),45)//.rotate($('rot'),25)//.translate($('rot'),50,0);
 });
