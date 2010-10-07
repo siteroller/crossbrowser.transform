@@ -10,6 +10,7 @@ var CrossBrowser = new Class({
 	initialize: function(){
 		//if (Browser.Engine.trident) this.ieLoop(); // In IE, unrecognized rules can be accessed w/o using AJAX.
 		this.loadStylesheets();
+		this.setup();
     }
 	
 	, loopstop: 0
@@ -167,11 +168,21 @@ CrossBrowser.implement({
 			this.ieMatrix(el, entries);
 		}
 	}
+	, setup: function(el){
+		this.el = el || '';
+		var pre = '';
+		switch (Browser.Engine.name){
+			case 'webkit': pre = '-webkit'; break;
+			case 'opera' : pre = '-o'; break;
+			case 'gecko' : if (Browser.Engine.version > 18) pre = '-moz';
+		}
+		this.pre = pre;
+	}
 	, scale: function(el, sx, sy, origin){
 		if (!sy) sy = sx;
-		if (!Browser.Engine.trident) return this.transform('scale', el, [sx, sy], origin);
+		if (!Browser.Engine.trident) return this.transform('scale', el, [sx, sy], matrix, origin);
 		var matrix = [sx, 0, 0, sy, 0, 0];
-		return this.ieMatrix2(el, matrix, origin);
+		return this.ieMatrix2(el, origin);
 	}
 	, scaleX: function(el, sx, origin){
 		return this.scale(el, sx, 1, origin);
@@ -181,9 +192,8 @@ CrossBrowser.implement({
 	}
 	, skew: function(el, sx, sy, origin){
 		if (!sy) sy = 1;
-		if (!Browser.Engine.trident) return this.transform('skew', el, [sx+'deg', sy+'deg'], origin);
 		var matrix = [sx, 0, 0, sy, 0, 0];
-		return this.ieMatrix2(el, matrix, origin);
+		return this.transform('skew', el, sx+'deg,'+sy+'deg', matrix, origin);
 	}
 	, skewX: function(el, sx, origin){
 		return this.skew(el, sx, 1, origin);
@@ -192,10 +202,8 @@ CrossBrowser.implement({
 		return this.skew(el, 1, sy, origin);
 	}
 	, translate: function(el, tx, ty, origin){
-		if (!ty) ty = 0;
-		if (!Browser.Engine.trident) return this.transform('translate', el, [tx+'px', ty+'px'], origin);
-		var matrix = [1, 0, 0, 1, tx, ty];
-		return this.ieMatrix2(el, matrix, origin);
+		var matrix = [1, 0, 0, 1, tx, ty || 0];
+		return this.transform('translate', el, tx+'px,'+ty+'px', matrix, origin);
 	}
 	, translateX: function(el, tx, origin){
 		return this.translate(el, tx, 0, origin);
@@ -204,30 +212,20 @@ CrossBrowser.implement({
 		return this.translate(el, 0, ty, origin);
 	}
 	, rotate: function(el, angle, origin){
-		if (!Browser.Engine.trident) return this.transform('rotate', el, angle + 'deg', origin);
 		var rad = angle * 0.0174532925 // Math.PI / 180
 			, cos = Math.cos(rad)
 			, sin = Math.sin(rad)
 			, matrix = [cos, sin, -sin, cos, 0, 0];
-		return this.ieMatrix2(el, matrix, origin);		
+		return this.transform('rotate', el, angle + 'deg', matrix, origin);
 	}
 	, matrix: function(el, matrix, origin){
-		Browser.Engine.trident 
-			? this.ieMatrix2(el, matrix, origin) 
-			: this.transform(el, 'matrix', matrix, origin);
-		return this;
+		return this.transform('matrix', el, matrix, matrix, origin);
 	}
-	, transform: function(transform, el, args, origin){
-		var pre;
+	, transform: function(transform, el, args, matrix, origin){
+		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
-		switch (Browser.Engine.name){
-			case 'webkit': pre = '-webkit'; break;
-			case 'gecko' : pre = '-moz'; break;
-			case 'opera' : pre = '-o';
-		}
-
-		el.setStyle(pre + '-transform', transform + '(' + args + ')');
-		el.setStyle(pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
+		el.setStyle(this.pre + '-transform', transform + '(' + args + ')');
+		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 		return this;
 	}
 	, ieMatrix2: function(el, matrix, origin){
@@ -274,5 +272,5 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2).skewY(35);
+	new CrossBrowser().rotate($('rot'),45)//.rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2).skewY(35);
 });
