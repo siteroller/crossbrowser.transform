@@ -186,33 +186,52 @@ CrossBrowser.implement({
 			//, '-ms-filter': filter
 		});
 	}
-	
-	, rotate: function(element, angle, origin){
-		this.element = element;
-		origin = origin || [50,50];
-		var rad = angle * Math.PI / 180
+	, translate: function(el, tx, ty, origin){
+		var matrix = [1, 0, 0, 1, tx || 0 , ty || 0];
+		this.matrix(el, matrix, origin);
+	}
+	, rotate: function(el, angle, origin){
+		var rad = angle * 0.0174532925 // Math.PI / 180
 			, cos = Math.cos(rad)
 			, sin = Math.sin(rad)
-			, a = cos
-			, b = sin
-			, c = -sin
-			, d = cos;
-			
-		this.element.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:a,b:b,c:c,d:d}));
-		var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(this.element);
+			, matrix = [cos, sin, -sin, cos, 0, 0];
 		
-		//result *= matrix; [origin.x,origin.y]	* [[a,c],[b,d]]
-		var centerX = this.element.clientWidth / 2 - origin[0]
-			, centerY = this.element.clientHeight / 2 - origin[1]
-			, cx = centerX * a + centerY * c + origin[0]
-			, cy = centerX * b + centerY * d + origin[1];
-						
-		this.element.style.top += cy - this.element.offsetHeight / 2;
-		this.element.style.left += cx - this.element.offsetWidth / 2;
+		this.matrix(el, matrix, origin);
+		return this;
 	}
 	
+	, matrix: function(el, matrix, origin){
+		var pre;
+		origin = origin || [50,50]; 
+		switch (Browser.Engine.name){
+			case 'trident': return this.ieMatrix2(el, matrix, origin);
+			case 'webkit': pre = '-webkit'; break;
+			case 'gecko' : pre = '-moz'; break;
+			case 'opera' : pre = '-o';
+		}
+		el.setStyle(pre + '-transform','matrix(' + matrix + ')');
+		el.setStyle(pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
+	}
+	
+	, ieMatrix2: function(el, matrix, origin){
+		
+		el.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]}));
+		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
+
+		var x = el.clientWidth / 2 - origin[0]
+			, y = el.clientHeight / 2 - origin[1]
+			, X = x * matrix[0] + y * matrix[2] + origin[0]
+			, Y = x * matrix[1] + y * matrix[3] + origin[1];
+		
+		el.style.left = parseInt(el.style.left||0) + X - el.offsetWidth / 2 + matrix[4];
+		el.style.top = parseInt(el.style.top||0) + Y - el.offsetHeight / 2 + matrix[5];
+
+	}, convert: function(){
+	
+	
+	}
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45);
+	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50,0);
 });
