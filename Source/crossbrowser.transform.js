@@ -202,7 +202,8 @@ CrossBrowser.implement({
 		return this.skew(el, 1, sy, origin);
 	}
 	, translate: function(el, tx, ty, origin){
-		var matrix = [1, 0, 0, 1, tx, ty || 0];
+		if (!ty) ty = 0;
+		var matrix = [1, 0, 0, 1, tx, ty];
 		return this.transform('translate', el, tx+'px,'+ty+'px', matrix, origin);
 	}
 	, translateX: function(el, tx, origin){
@@ -272,5 +273,5 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45)//.rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2).skewY(35);
+	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
 });
