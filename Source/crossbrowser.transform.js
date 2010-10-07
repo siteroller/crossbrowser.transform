@@ -23,9 +23,9 @@ var CrossBrowser = new Class({
 			//switch to regex to catch case insensitive domain name changes
 			if (href.contains('://') && href.contains(document.domain)) new Request({onSuccess:self.parse});
 		});
-	},
+	}
 
-	stripComments: function(content, type){
+	, stripComments: function(content, type){
 		switch(type){
 			case 'js':
 				// 2nd regex looks like it will cough on regex's with '/*', but claims it works. should be rewritten.
@@ -38,6 +38,36 @@ var CrossBrowser = new Class({
 			break;
 		}
 		return content;
+	}
+	
+	, ieLoop: function(){
+		var self = this, classes = this.parseVariables.classes;
+		// Loop through stylesheets for styles that can be affected. IE allows access to styles it doesn't recognise.
+		Array.each(document.styleSheets, function(sheet,i){
+			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
+				// IE border-radius
+				var pos = rule.style['moz-border-radius'];
+				if (pos) $$(rule.selectorText).each(function(el){ self.ieBorder(el,pos) });
+				pos = rule.style['moz-transform'];
+				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
+				// -moz-transform: matrix, rotate, scale, scaleX, scaleY, skew, skewX, skewY, translate, translateX, translateY
+				// While ALL of these can be done using matrix, it may be simpler to do the three translations using regular javascript.
+			});
+		});
+		
+		// Must query elements for styles on element instead of in stylesheet. [ToDo: Test!]
+		classes.fixed = classes.fixed.substr(1);
+		if (classes.IE6 && (classes.fixed2 = $$('[style*=fixed]')) || classes.fixed){
+			// Concept - http://ryanfait.com/position-fixed-ie6
+			var ss = document.createStyleSheet(), height = 'height:100%; overflow:auto';
+			ss.addRule('html', height); ss.addRule('body', height);
+			new Element('div',{
+				styles:{width:'100%',position:'relative',height:'100%',overflow:'auto'}
+			}).adopt($$('body>*')).inject(window.document.body);
+			var styleEls = $$(classes.fixed).combine(classes.fixed2).each(function(el){
+				el.inject(document.body);
+			});
+		};
 	}
 });
 
@@ -89,37 +119,6 @@ CrossBrowser.implement({
 		
 	},
 	
-	ieLoop: function(){
-		var self = this, classes = this.parseVariables.classes;
-		// Loop through stylesheets for styles that can be affected. IE allows access to styles it doesn't recognise.
-		Array.each(document.styleSheets, function(sheet,i){
-			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
-				// IE border-radius
-				var pos = rule.style['moz-border-radius'];
-				if (pos) $$(rule.selectorText).each(function(el){ self.ieBorder(el,pos) });
-				pos = rule.style['moz-transform'];
-				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
-				// -moz-transform: matrix, rotate, scale, scaleX, scaleY, skew, skewX, skewY, translate, translateX, translateY
-				// While ALL of these can be done using matrix, it may be simpler to do the three translations using regular javascript.
-			});
-		});
-		
-		// Must query elements for styles on element instead of in stylesheet. [ToDo: Test!]
-		classes.fixed = classes.fixed.substr(1);
-		if (classes.IE6 && (classes.fixed2 = $$('[style*=fixed]')) || classes.fixed){
-			// Concept - http://ryanfait.com/position-fixed-ie6
-			var ss = document.createStyleSheet(), height = 'height:100%; overflow:auto';
-			ss.addRule('html', height); ss.addRule('body', height);
-			new Element('div',{
-				styles:{width:'100%',position:'relative',height:'100%',overflow:'auto'}
-			}).adopt($$('body>*')).inject(window.document.body);
-			var styleEls = $$(classes.fixed).combine(classes.fixed2).each(function(el){
-				el.inject(document.body);
-			});
-		};
-	},
-	
-	
 	
 	ieTransform: function(el,rule){
 		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
@@ -155,38 +154,54 @@ CrossBrowser.implement({
 				break;
 				case 'translatex':
 				case 'translatey': break;
+				
+				// from here, not supported by Firefox:
+				case 'squeeze':
+					entries = [k, 0, 0, 1/k]
+				case 'projection': 
+					entries = [0,0,0,1]
+				case 'shear':
+					entries = [1,sy,sx,1]
+				case 'inversion':
 			}
 			this.ieMatrix(el, entries);
 		}
-	},
-	
-	ieMatrix: function(el,entries,h,w){
-		if (!h){
-			var size = el.getCoordinates();
-			h = size.height / 2;
-			w = size.width / 2;
-			x = size.left;
-			y = size.top;
-		}
-		
-		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
-			, filter = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
-			, sx = Math.abs(c) * h + (Math.abs(a) - 1) * w
-			, sy = Math.abs(b) * w + (Math.abs(d) - 1) * h;
-
-		el.setStyles({
-			left: Math.round(x + e - sx)
-			, top: Math.round(y + f - sy)
-			, filter: filter
-			, height: 200
-			, width: 200
-			//, '-ms-filter': filter
-		});
+	}
+	, scale: function(el, sx, sy, origin){
+		if (!sy) sy = sx;
+		if (!Browser.Engine.trident) return this.transform('scale', el, [sx, sy], origin);
+		var matrix = [sx, 0, 0, sy, 0, 0];
+		return this.ieMatrix2(el, matrix, origin);
+	}
+	, scaleX: function(el, sx, origin){
+		return this.scale(el, sx, 1, origin);
+	}
+	, scaleY: function(el, sy, origin){
+		return this.scale(el, 1, sy, origin);
+	}
+	, skew: function(el, sx, sy, origin){
+		if (!sy) sy = 1;
+		if (!Browser.Engine.trident) return this.transform('skew', el, [sx+'deg', sy+'deg'], origin);
+		var matrix = [sx, 0, 0, sy, 0, 0];
+		return this.ieMatrix2(el, matrix, origin);
+	}
+	, skewX: function(el, sx, origin){
+		return this.skew(el, sx, 1, origin);
+	}
+	, skewY: function(el, sy, origin){
+		return this.skew(el, 1, sy, origin);
 	}
 	, translate: function(el, tx, ty, origin){
-		if (!Browser.Engine.trident) return this.transform('translate', el, tx, ty, origin);
-		var matrix = [1, 0, 0, 1, tx || 0 , ty || 0];
-		this.matrix(el, matrix, origin);
+		if (!ty) ty = 0;
+		if (!Browser.Engine.trident) return this.transform('translate', el, [tx+'px', ty+'px'], origin);
+		var matrix = [1, 0, 0, 1, tx, ty];
+		return this.ieMatrix2(el, matrix, origin);
+	}
+	, translateX: function(el, tx, origin){
+		return this.translate(el, tx, 0, origin);
+	}
+	, translateY: function(el, ty, origin){
+		return this.translate(el, 0, ty, origin);
 	}
 	, rotate: function(el, angle, origin){
 		if (!Browser.Engine.trident) return this.transform('rotate', el, angle + 'deg', origin);
@@ -228,12 +243,36 @@ CrossBrowser.implement({
 		el.style.left = parseInt(el.style.left||0) + X - el.offsetWidth / 2 + matrix[4];
 		el.style.top = parseInt(el.style.top||0) + Y - el.offsetHeight / 2 + matrix[5];
 		return this;
-	}, convert: function(){
+	}
+	, ieMatrix: function(el,entries,h,w){
+		if (!h){
+			var size = el.getCoordinates();
+			h = size.height / 2;
+			w = size.width / 2;
+			x = size.left;
+			y = size.top;
+		}
+		
+		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
+			, filter = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
+			, sx = Math.abs(c) * h + (Math.abs(a) - 1) * w
+			, sy = Math.abs(b) * w + (Math.abs(d) - 1) * h;
+
+		el.setStyles({
+			left: Math.round(x + e - sx)
+			, top: Math.round(y + f - sy)
+			, filter: filter
+			, height: 200
+			, width: 200
+			//, '-ms-filter': filter
+		});
+	}
+	, convert: function(){
 	
 	
 	}
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45)//.rotate($('rot'),25)//.translate($('rot'),50,0);
+	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2).skewY(35);
 });
