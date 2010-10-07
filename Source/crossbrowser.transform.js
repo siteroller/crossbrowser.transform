@@ -232,7 +232,7 @@ CrossBrowser.implement({
 	, ieMatrix2: function(el, matrix, origin){
 		origin = origin || [50,50];
 		el.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]}));
-		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
+		if (true) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1]
@@ -273,5 +273,6 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),45).rotate($('rot'),25).translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
+	new CrossBrowser().rotate($('rot'),45,[0,0]);
+	//.rotate($('rot'),25)//.translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
 });
