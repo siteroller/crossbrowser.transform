@@ -4,6 +4,10 @@ stripComments based on http://james.padolsey.com/javascript/javascript-comment-r
 IEMatrix functions are based on: 
 	http://extremelysatisfactorytotalitarianism.com/blog/?p=922#theCode
 	http://someguynameddylan.com/lab/transform-origin-in-internet-explorer.php
+Transform Matricis from Wikipedia - http://en.wikipedia.org/wiki
+	/Matrix_(mathematics)
+	/Linear_transformation
+	/Transformation_matrix
 */
 
 var CrossBrowser = new Class({
@@ -130,40 +134,7 @@ CrossBrowser.implement({
 		
 		while (style = reg.exec(rule)){
 			switch (style[1].trim().toLowerCase()){
-				case 'matrix':
-					var a = style[2].split(/\s*,\s*/);
-					entries = [a[0], a[1], a[2], a[3], parseFloat(a[5]), parseFloat(a[5])]; // 4 & 5 Should be processed from length values to pixels.
-				break;
-				case 'rotate':
-					var angle = style[2].match(/([.0-9]+)deg/i)[1]
-					, cos = Math.cos(angle)
-					, sin = Math.sin(angle);
-					entries = [cos, sin, -sin, cos, 0, 0];
-				break;
 				
-				case 'scale':
-					entries = [sx, 0, 0, sy, 0, 0]
-				case 'scalex':
-				case 'scaley': break;
-				
-				case 'skew':
-				case 'skewx':
-				case 'skewy': break;
-				
-				case 'translate':
-					entries = [1, 0, 0, 1, TX, TY];
-				break;
-				case 'translatex':
-				case 'translatey': break;
-				
-				// from here, not supported by Firefox:
-				case 'squeeze':
-					entries = [k, 0, 0, 1/k]
-				case 'projection': 
-					entries = [0,0,0,1]
-				case 'shear':
-					entries = [1,sy,sx,1]
-				case 'inversion':
 			}
 			this.ieMatrix(el, entries);
 		}
@@ -272,6 +243,54 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]);
-	////.translate($('rot'),50).scaleX($('rot'),2)//.skewY(35);
+	new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
 });
+/*
+ieTransform: function(el,rule){
+	var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
+	function toRadians(deg){ return (deg - 360) * Math.PI / 180; }
+	
+	el.setStyle('background-color','red');
+	if (el.getStyle('position') == 'static') el.setStyle('position','relative');
+	
+	while (style = reg.exec(rule)){
+		switch (style[1].trim().toLowerCase()){
+			case 'matrix':
+*///				var a = style[2].split(/\s*,\s*/);
+/*				entries = [a[0], a[1], a[2], a[3], parseFloat(a[5]), parseFloat(a[5])]; // 4 & 5 Should be processed from length values to pixels.
+			break;
+			case 'rotate':
+				var angle = style[2].match(/([.0-9]+)deg/i)[1]
+				, cos = Math.cos(angle)
+				, sin = Math.sin(angle);
+				entries = [cos, sin, -sin, cos, 0, 0];
+			break;
+			
+			case 'scale':
+				entries = [sx, 0, 0, sy, 0, 0]
+			case 'scalex':
+			case 'scaley': break;
+			
+			case 'skew':
+			case 'skewx':
+			case 'skewy': break;
+			
+			case 'translate':
+				entries = [1, 0, 0, 1, TX, TY];
+			break;
+			case 'translatex':
+			case 'translatey': break;
+			
+			// from here, not supported by Firefox:
+			case 'squeeze':
+				entries = [k, 0, 0, 1/k]
+			case 'projection': 
+				entries = [0,0,0,1]
+			case 'shear':
+				entries = [1,sy,sx,1]
+			case 'inversion':
+		}
+		this.ieMatrix(el, entries);
+	}
+}
+*/
