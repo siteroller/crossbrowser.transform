@@ -46,33 +46,14 @@ var CrossBrowser = new Class({
 	}
 	
 	, ieLoop: function(){
-		var self = this, classes = this.parseVariables.classes;
-		// Loop through stylesheets for styles that can be affected. IE allows access to styles it doesn't recognise.
+		var self = this;
+		// Loop through stylesheets. IE allows access to styles it doesn't recognise.
 		Array.each(document.styleSheets, function(sheet,i){
 			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
-				// IE border-radius
-				var pos = rule.style['moz-border-radius'];
-				if (pos) $$(rule.selectorText).each(function(el){ self.ieBorder(el,pos) });
-				pos = rule.style['moz-transform'];
+				var pos = rule.style['moz-transform'];
 				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
-				// -moz-transform: matrix, rotate, scale, scaleX, scaleY, skew, skewX, skewY, translate, translateX, translateY
-				// While ALL of these can be done using matrix, it may be simpler to do the three translations using regular javascript.
 			});
 		});
-		
-		// Must query elements for styles on element instead of in stylesheet. [ToDo: Test!]
-		classes.fixed = classes.fixed.substr(1);
-		if (classes.IE6 && (classes.fixed2 = $$('[style*=fixed]')) || classes.fixed){
-			// Concept - http://ryanfait.com/position-fixed-ie6
-			var ss = document.createStyleSheet(), height = 'height:100%; overflow:auto';
-			ss.addRule('html', height); ss.addRule('body', height);
-			new Element('div',{
-				styles:{width:'100%',position:'relative',height:'100%',overflow:'auto'}
-			}).adopt($$('body>*')).inject(window.document.body);
-			var styleEls = $$(classes.fixed).combine(classes.fixed2).each(function(el){
-				el.inject(document.body);
-			});
-		};
 	}
 });
 
@@ -92,9 +73,6 @@ CrossBrowser.implement({
 	}
 	, ieTransform: function(el,rule){
 		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
-		function toRadians(deg){ return (deg - 360) * Math.PI / 180; }
-		
-		el.setStyle('background-color','red');
 		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
 		
 		while (style = reg.exec(rule)){
