@@ -79,27 +79,18 @@ var CrossBrowser = new Class({
 CrossBrowser.implement({
 	
 	parse: function(css,sheet){
-		
 		sheet = document.styleSheets[sheet];
-		var add, rule, parts, style, styles = ''
-			, self = this;		
+		var style, rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
 		
-		// Fix transforms
-		rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
 		while (style = rule.exec(css)){
 			if(Browser.Engine.webkit){
-					// FF takes a <length> tx & ty matrix value; webkit takes unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-					// This function removes the '%','em','px' etc. doesn't convert it to pixels. Yet.
-					style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
-					document.styleSheets[0].insertRule(style[1] + '{-webkit' + style[2] + '}'); 
-					break;
+				// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit uses unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
+				style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
+				document.styleSheets[0].insertRule(style[1] + '{-webkit' + style[2] + '}');
 			}
-		}
-		
-	},
-	
-	
-	ieTransform: function(el,rule){
+		}	
+	}
+	, ieTransform: function(el,rule){
 		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
 		function toRadians(deg){ return (deg - 360) * Math.PI / 180; }
 		
