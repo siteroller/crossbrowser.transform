@@ -77,43 +77,17 @@ var CrossBrowser = new Class({
 });
 
 CrossBrowser.implement({
-
-	parseVariables: {
-		classes: {
-			fixed: ''
-			, IE6: Browser.Engine.trident && Browser.Engine.version < 5
-			, embedded: []
-		}
-		, regexs: {
-			filter: Browser.Engine.version == 4 ? 'filter' : '-ms-filter'
-			, transform: '-moz(-transform[^;}]+)'
-			, transition: '-moz(-transition[^;}]+)'
-		}
-	},
 	
 	parse: function(css,sheet){
 		
 		sheet = document.styleSheets[sheet];
-		var add, rule, parts, style, styles = '' 
-			, self = this
-			, regexs = this.parseVariables.regexs
-			, classes = this.parseVariables.classes
-			, loopstop = this.loopstop;
-		
-		// Fix transitions [-moz-transition, -moz-transition-property, -moz-transition-duration, -moz-transition-timing-function, -moz-transition-delay]
-		rule = new RegExp(regexs.prefix + regexs.transition, 'gi');
-		while (style = rule.exec(css)){
-			if (++loopstop > 40) { alert('Transitions loop stopped!'); return false; }
-			switch (Browser.Engine.name){
-				case 'webkit': sheet.insertRule(style[1] + '{-webkit' + style[2] + '}'); break;
-			}
-		}
+		var add, rule, parts, style, styles = ''
+			, self = this;		
 		
 		// Fix transforms
-		rule = new RegExp(regexs.prefix + regexs.transform, 'gi');
+		rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
 		while (style = rule.exec(css)){
-			switch (Browser.Engine.name){
-				case 'webkit':
+			if(Browser.Engine.webkit){
 					// FF takes a <length> tx & ty matrix value; webkit takes unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
 					// This function removes the '%','em','px' etc. doesn't convert it to pixels. Yet.
 					style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
@@ -146,7 +120,8 @@ CrossBrowser.implement({
 			case 'webkit': pre = '-webkit'; break;
 			case 'opera' : pre = '-o'; break;
 			case 'gecko' : if (Browser.Engine.version > 18) pre = '-moz';
-		}
+        }
+        
 		this.pre = pre;
 	}
 	, scale: function(el, sx, sy, origin){
@@ -201,16 +176,17 @@ CrossBrowser.implement({
 	}
 	, ieMatrix2: function(el, matrix, origin){
 		origin = origin || [50,50];
-		el.setStyle('filter', 'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]}));
+		el.setStyle(
+			Browser.Engine.version < 5 ? 'filter' : '-ms-filter',
+			'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]})
+		);
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 
 		var x = el.clientWidth / 2 - origin[0]
-			, y = el.clientHeight / 2 - origin[1]
-			, X = x * matrix[0] + y * matrix[2] + origin[0]
-			, Y = x * matrix[1] + y * matrix[3] + origin[1];
+			, y = el.clientHeight / 2 - origin[1];
 		
-		el.style.left = X - el.offsetWidth / 2 + matrix[4]; //parseInt(el.style.left||0) + 
-		el.style.top =  Y - el.offsetHeight / 2 + matrix[5];//parseInt(el.style.top||0) +
+		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2;
+		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
 		return this;
 	}
 	, ieMatrix: function(el,entries,h,w){
@@ -223,17 +199,17 @@ CrossBrowser.implement({
 		}
 		
 		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
-			, filter = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
+			, filter = Browser.Engine.version < 5 ? 'filter' : '-ms-filter'
+			, transform = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
 			, sx = Math.abs(c) * h + (Math.abs(a) - 1) * w
 			, sy = Math.abs(b) * w + (Math.abs(d) - 1) * h;
 
 		el.setStyles({
 			left: Math.round(x + e - sx)
 			, top: Math.round(y + f - sy)
-			, filter: filter
+			, filter: transform
 			, height: 200
 			, width: 200
-			//, '-ms-filter': filter
 		});
 	}
 	, convert: function(){
