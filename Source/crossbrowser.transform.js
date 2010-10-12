@@ -11,11 +11,6 @@ Transform Matricis from Wikipedia - http://en.wikipedia.org/wiki
 */
 
 var CrossBrowser = new Class({
-	initialize: function(){
-		//if (Browser.Engine.trident) this.ieLoop(); // In IE, unrecognized rules can be accessed w/o using AJAX.
-		this.loadStylesheets();
-		this.setup();
-    }
 	
 	, loopstop: 0
 	
@@ -29,7 +24,18 @@ var CrossBrowser = new Class({
 			if (href.contains('://') && href.contains(document.domain)) new Request({onSuccess:self.parse});
 		});
 	}
-
+	
+	, ieLoop: function(){
+		var self = this;
+		// Loop through stylesheets. IE allows access to styles it doesn't recognise.
+		Array.each(document.styleSheets, function(sheet,i){
+			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
+				var pos = rule.style['moz-transform'];
+				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
+			});
+		});
+	}
+	
 	, stripComments: function(content, type){
 		switch(type){
 			case 'js':
@@ -44,45 +50,107 @@ var CrossBrowser = new Class({
 		}
 		return content;
 	}
-	
-	, ieLoop: function(){
-		var self = this;
-		// Loop through stylesheets. IE allows access to styles it doesn't recognise.
-		Array.each(document.styleSheets, function(sheet,i){
-			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
-				var pos = rule.style['moz-transform'];
-				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
-			});
-		});
-	}
 });
 
 CrossBrowser.implement({
 	
-	parse: function(css,sheet){
+	parseStyles:function(){
+		if (Browser.Engine.trident) ieLoop(); // Only IE reads unrecognized styles.
+		else if (!Browser.Engine.gecko) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
+	}
+	, parse: function(css,sheet){
 		sheet = document.styleSheets[sheet];
 		var style, rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
 		
 		while (style = rule.exec(css)){
-			if(Browser.Engine.webkit){
-				// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit uses unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
+			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
+			if(Browser.Engine.webkit)
 				style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
-				document.styleSheets[0].insertRule(style[1] + '{-webkit' + style[2] + '}');
-			}
-		}	
+			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		}
+		
 	}
 	, ieTransform: function(el,rule){
 		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
-		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
 		
+		// el.transform('rotate',45);
+		//elements.transform('skew',[43,45])
+		//el.transform({ rotate:45, skew:[56,43], scale:32 })
+		
+		// If required, mangled, then forward.
+		// remove the deg if 
+		
+		/*
+		
+		
+		
+		// input - 
+		
+		1. function call
+			el.transform('scaleX',2) - 
+			output - apply to element.
+		2. ieLoop: looping through all styles in IE
+			-moz-transform:scale(2)
+			output - add to stylesheet
+			filter: ....
+			-webkit-transform:
+		3. parse: 
+		
+		if ieLoop - function will use ie's filter.
+		if parse, in this case, must be 
+		*/
+	
 		while (style = reg.exec(rule)){
-			switch (style[1].trim().toLowerCase()){
-				
-			}
-			this.ieMatrix(el, entries);
+			// loop should add each matrix as it is returned
+			var add = this.getMatrix(style[1].trim().toLowerCase(), tx, ty, false);
 		}
+		
+		// ieMatrix should return a matrix to apply.
+		document.styleSheets[0].insertRule(this.ieMatrix(el, entries));
 	}
-	, setup: function(el){
+	, transformFunc(el, transform, tx, ty, origin){
+		if ($type(ty) == 'array'){ origin = ty; ty = null; }
+		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
+	}
+	, getMatrix: function(transform, tx, ty, ie){
+		
+		if (ty === 0) ty = 0.001;
+			
+		switch (transform){ //style[1].trim().toLowerCase()
+			case 'scaley': ty = tx; tx = 1;
+			case 'scalex': if (!ty) ty = 1;
+			case 'scale':
+				if (!ty) ty = tx;
+				string = [tx, ty];
+				matrix = [tx, 0, 0, sy, 0, 0];
+				break;
+			case 'skewx': ty = 1;
+			case 'skewy': if (!tx) tx = 1;
+			case 'skew':
+				if (!ty) ty = 1;
+				string = tx+'deg,'+ty+'deg';
+				matrix = [tx, 0, 0, ty, 0, 0];
+				break;
+			case 'translatex': ty = 0;
+			case 'translatey': tx = 0;
+			case 'translate':
+				if (!ty) ty = 0;
+				string =  tx+'px,'+ty+'px';
+				matrix = [1, 0, 0, 1, tx, ty];
+				break;
+			case 'rotate':
+				var rad = angle * 0.0174532925 // Math.PI / 180
+					, cos = Math.cos(rad)
+					, sin = Math.sin(rad);
+				string = angle + 'deg';
+				matrix = [cos, sin, -sin, cos, 0, 0];
+				break;
+			case 'matrix':
+				break;
+		}
+		return ie ? matrix : string;
+	}
+	, initialize: function(el){
 		this.el = el || '';
 		var pre = '';
 		switch (Browser.Engine.name){
@@ -139,6 +207,7 @@ CrossBrowser.implement({
 	, transform: function(transform, el, args, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
+		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
 		el.setStyle(this.pre + '-transform', transform + '(' + args + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 		return this;
