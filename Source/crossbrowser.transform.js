@@ -153,50 +153,7 @@ CrossBrowser.implement({
 		this.el = el || '';
 		this.pre = {webkit:'-webkit', opera:'-o',gecko:'-moz'}[Browser.Engine.name];
 	}
-/*	, scale: function(el, sx, sy, origin){
-		if (!sy) sy = sx;
-		var matrix = [sx, 0, 0, sy, 0, 0];
-		return this.transform('scale', el, [sx, sy], matrix, origin);
-	}
-	, scaleX: function(el, sx, origin){
-		return this.scale(el, sx, 1, origin);
-	}
-	, scaleY: function(el, sy, origin){
-		return this.scale(el, 1, sy, origin);
-	}
-	, skew: function(el, sx, sy, origin){
-		if (!sy) sy = 1;
-		var matrix = [sx, 0, 0, sy, 0, 0];
-		return this.transform('skew', el, sx+'deg,'+sy+'deg', matrix, origin);
-	}
-	, skewX: function(el, sx, origin){
-		return this.skew(el, sx, 1, origin);
-	}
-	, skewY: function(el, sy, origin){
-		return this.skew(el, 1, sy, origin);
-	}
-	, translate: function(el, tx, ty, origin){
-		if (!ty) ty = 0;
-		var matrix = [1, 0, 0, 1, tx, ty];
-		return this.transform('translate', el, tx+'px,'+ty+'px', matrix, origin);
-	}
-	, translateX: function(el, tx, origin){
-		return this.translate(el, tx, 0, origin);
-	}
-	, translateY: function(el, ty, origin){
-		return this.translate(el, 0, ty, origin);
-	}
-	, rotate: function(el, angle, origin){
-		var rad = angle * 0.0174532925 // Math.PI / 180
-			, cos = Math.cos(rad)
-			, sin = Math.sin(rad)
-			, matrix = [cos, sin, -sin, cos, 0, 0];
-		return this.transform('rotate', el, angle + 'deg', matrix, origin);
-	}
-	, matrix: function(el, matrix, origin){
-		return this.transform('matrix', el, matrix, matrix, origin);
-	}
-*/	, transform: function(el, transform, matrix, origin){
+	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
 		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
