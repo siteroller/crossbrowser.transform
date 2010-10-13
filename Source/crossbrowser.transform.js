@@ -77,7 +77,7 @@ CrossBrowser.implement({
 			, reg = /([^(]+)\(([^)]*)\)/gi;
 
 		while (style = reg.exec(rule)){
-			var transform = style[1].trim().toLowerCase()
+			var transform = style[1].trim()
 				, t = style[2].split(/\s*,\s*/).map(this.convert)
 				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]); 
 			matrix = Object.map(matrix, function(n, i){ return n + entries.i });
@@ -86,20 +86,22 @@ CrossBrowser.implement({
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
+		console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
+		return this;
 	}
 	, getMatrix: function(transform, tx, ty, ie){
 		
+		var t = transform.toLowerCase()
+			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
+		if (ie) return tx + unit + (ty ? ',' + ty + unit : '');
 		if (ty === 0) ty = 0.001;
-			
-		switch (transform){ //style[1].trim().toLowerCase()
+		
+		switch (t){
 			case 'scaley': ty = tx; tx = 1;
 			case 'scalex': if (!ty) ty = 1;
-			case 'scale':
-				if (!ty) ty = tx;
-				string = [tx, ty];
-				matrix = [tx, 0, 0, ty, 0, 0];
-				break;
+			case 'scale': if (!ty) ty = tx;
+				matrix = [tx, 0, 0, ty, 0, 0]; break;
 			case 'skewx': ty = 1;
 			case 'skewy': if (!tx) tx = 1;
 			case 'skew':
@@ -112,14 +114,12 @@ CrossBrowser.implement({
 			case 'translate':
 				if (!tx) tx = 0;
 				if (!ty) ty = 0;
-				string =  tx+'px,'+ty+'px';
 				matrix = [1, 0, 0, 1, tx, ty];
 				break;
 			case 'rotate':
-				var rad = tx * 0.0174532925 // Math.PI / 180
+				var rad = tx * 0.0174532925
 					, cos = Math.cos(rad)
 					, sin = Math.sin(rad);
-				string = tx + 'deg';
 				matrix = [cos, sin, -sin, cos, 0, 0];
 				break;
 			// Not part of W3C spec, on ToDo list.
@@ -128,7 +128,7 @@ CrossBrowser.implement({
 			// case 'shear': matrix = [1,sy,sx,1]
 			// case 'inversion':
 		}
-		return !ie ? matrix : string;
+		return matrix;
 	}
 	, initialize: function(el){
 		this.el = el || '';
@@ -188,5 +188,5 @@ CrossBrowser.implement({
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'translate',50);
+	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
 });
