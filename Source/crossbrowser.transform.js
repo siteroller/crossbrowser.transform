@@ -98,7 +98,7 @@ CrossBrowser.implement({
 			case 'scale':
 				if (!ty) ty = tx;
 				string = [tx, ty];
-				matrix = [tx, 0, 0, sy, 0, 0];
+				matrix = [tx, 0, 0, ty, 0, 0];
 				break;
 			case 'skewx': ty = 1;
 			case 'skewy': if (!tx) tx = 1;
@@ -122,8 +122,11 @@ CrossBrowser.implement({
 				string = tx + 'deg';
 				matrix = [cos, sin, -sin, cos, 0, 0];
 				break;
-			case 'matrix':
-				break;
+			// Not part of W3C spec, on ToDo list.
+			// case 'squeeze': matrix = [k, 0, 0, 1/k]
+			// case 'projection': matrix = [0,0,0,1]
+			// case 'shear': matrix = [1,sy,sx,1]
+			// case 'inversion':
 		}
 		return !ie ? matrix : string;
 	}
@@ -145,13 +148,13 @@ CrossBrowser.implement({
 			Browser.Engine.version < 5 ? 'filter' : '-ms-filter',
 			'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]})
 		);
-		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
-
+		
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1];
-		
+			
 		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2;
 		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
+		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 		return this;
 	}
 	, ieMatrix: function(el,entries,h,w){
@@ -161,7 +164,7 @@ CrossBrowser.implement({
 			w = size.width / 2;
 			x = size.left;
 			y = size.top;
-		}
+		};
 		
 		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
 			, filter = Browser.Engine.version < 5 ? 'filter' : '-ms-filter'
@@ -185,29 +188,5 @@ CrossBrowser.implement({
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformer($('rot'),'rotate',25)//.transformer($('rot'),'translate',50);
+	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'translate',50);
 });
-/*
-ieTransform: function(el,rule){
-	var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
-	while (style = reg.exec(rule)){
-		switch (style[1].trim().toLowerCase()){
-			case 'matrix':
-*///				var a = style[2].split(/\s*,\s*/);
-/*				entries = [a[0], a[1], a[2], a[3], parseFloat(a[5]), parseFloat(a[5])]; // 4 & 5 Should be processed from length values to pixels.
-			case 'rotate':
-				var angle = style[2].match(/([.0-9]+)deg/i)[1]
-			
-			// from here, not supported by Firefox:
-			case 'squeeze':
-				entries = [k, 0, 0, 1/k]
-			case 'projection': 
-				entries = [0,0,0,1]
-			case 'shear':
-				entries = [1,sy,sx,1]
-			case 'inversion':
-		}
-		this.ieMatrix(el, entries);
-	}
-}
-*/
