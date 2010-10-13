@@ -71,6 +71,7 @@ CrossBrowser.implement({
 		
 	}
 	, ieTransform: function(el,rule){
+		// Convert a -moz-transform style for IE.
 		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
 		
 		// el.transform('rotate',45);
@@ -98,16 +99,28 @@ CrossBrowser.implement({
 		if ieLoop - function will use ie's filter.
 		if parse, in this case, must be 
 		*/
-	
 		while (style = reg.exec(rule)){
-			// loop should add each matrix as it is returned
-			var add = this.getMatrix(style[1].trim().toLowerCase(), tx, ty, false);
+			var transform = style[1].trim().toLowerCase()
+				, t = style[2].split(/\s*,\s*/).map(this.convert);
+			
+			if (transform == 'matrix') this.applyMatrix(t);
+			else {
+				var add = this.getMatrix(transform, t[0], t[1]); 
+				// loop should add each matrix as it is returned
+				//if (transform == 'matrix'){
+				//	var a = style[2].split(/\s*,\s*/);
+				//	entries = [a[0], a[1], a[2], a[3], this.convert(a[5]), this.convert(a[5])];
+				//} else {
+				//style[2].match(/([.0-9]+)deg/i)[1]
+				//entries = style[2].match(/([\.0-9]+)/g);
+				//entries.filter(this.convert);
+				//var a = style[2].split(/\s*,\s*/);
+				
+			}
 		}
-		
-		// ieMatrix should return a matrix to apply.
-		document.styleSheets[0].insertRule(this.ieMatrix(el, entries));
+		document.styleSheets[0].insertRule(this.ieMatrix(el, entries)); // ieMatrix should return a matrix to apply.
 	}
-	, transformFunc: function(el, transform, tx, ty, origin){
+	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 	}
@@ -199,15 +212,15 @@ CrossBrowser.implement({
 			, width: 200
 		});
 	}
-	, convert: function(){
-	
+	, convert: function(num){
+		return parseFloat(num)
 	
 	}
 });
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformFunc($('rot'),'rotate',25).transformFunc($('rot'),'translate',50);
+	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'translate',50);
 });
 /*
 ieTransform: function(el,rule){
