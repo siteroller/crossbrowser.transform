@@ -71,54 +71,18 @@ CrossBrowser.implement({
 		
 	}
 	, ieTransform: function(el,rule){
-		// Convert a -moz-transform style for IE.
-		var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
-		
-		// el.transform('rotate',45);
-		//elements.transform('skew',[43,45])
-		//el.transform({ rotate:45, skew:[56,43], scale:32 })
-		
-		// If required, mangled, then forward.
-		// remove the deg if 	
-		/*
-		
-		
-		
-		// input - 
-		
-		1. function call
-			el.transform('scaleX',2) - 
-			output - apply to element.
-		2. ieLoop: looping through all styles in IE
-			-moz-transform:scale(2)
-			output - add to stylesheet
-			filter: ....
-			-webkit-transform:
-		3. parse: 
-		
-		if ieLoop - function will use ie's filter.
-		if parse, in this case, must be 
-		*/
+		// Converts a -moz-transform style into an IE filter.
+		var style
+			, matrix = [0,0,0,0,0,0]
+			, reg = /([^(]+)\(([^)]*)\)/gi;
+
 		while (style = reg.exec(rule)){
 			var transform = style[1].trim().toLowerCase()
-				, t = style[2].split(/\s*,\s*/).map(this.convert);
-			
-			if (transform == 'matrix') this.applyMatrix(t);
-			else {
-				var add = this.getMatrix(transform, t[0], t[1]); 
-				// loop should add each matrix as it is returned
-				//if (transform == 'matrix'){
-				//	var a = style[2].split(/\s*,\s*/);
-				//	entries = [a[0], a[1], a[2], a[3], this.convert(a[5]), this.convert(a[5])];
-				//} else {
-				//style[2].match(/([.0-9]+)deg/i)[1]
-				//entries = style[2].match(/([\.0-9]+)/g);
-				//entries.filter(this.convert);
-				//var a = style[2].split(/\s*,\s*/);
-				
-			}
+				, t = style[2].split(/\s*,\s*/).map(this.convert)
+				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]); 
+			matrix = Object.map(matrix, function(n, i){ return n + entries.i });
 		}
-		document.styleSheets[0].insertRule(this.ieMatrix(el, entries)); // ieMatrix should return a matrix to apply.
+		document.styleSheets[0].insertRule(this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
@@ -143,9 +107,10 @@ CrossBrowser.implement({
 				string = tx+'deg,'+ty+'deg';
 				matrix = [tx, 0, 0, ty, 0, 0];
 				break;
-			case 'translatex': ty = 0;
-			case 'translatey': tx = 0;
+			case 'translatex':
+			case 'translatey':
 			case 'translate':
+				if (!tx) tx = 0;
 				if (!ty) ty = 0;
 				string =  tx+'px,'+ty+'px';
 				matrix = [1, 0, 0, 1, tx, ty];
@@ -220,7 +185,7 @@ CrossBrowser.implement({
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'translate',50);
+	new CrossBrowser().transformer($('rot'),'rotate',25)//.transformer($('rot'),'translate',50);
 });
 /*
 ieTransform: function(el,rule){
