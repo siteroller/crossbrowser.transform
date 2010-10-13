@@ -11,9 +11,9 @@ Transform Matricis from Wikipedia - http://en.wikipedia.org/wiki
 */
 
 var CrossBrowser = new Class({
-	
-	, loopstop: 0
-	
+
+	loopstop: 0
+
 	, loadStylesheets: function(){
 		var self = this;
 		$$('style').each(function(el,i){
@@ -24,7 +24,7 @@ var CrossBrowser = new Class({
 			if (href.contains('://') && href.contains(document.domain)) new Request({onSuccess:self.parse});
 		});
 	}
-	
+
 	, ieLoop: function(){
 		var self = this;
 		// Loop through stylesheets. IE allows access to styles it doesn't recognise.
@@ -78,8 +78,7 @@ CrossBrowser.implement({
 		//el.transform({ rotate:45, skew:[56,43], scale:32 })
 		
 		// If required, mangled, then forward.
-		// remove the deg if 
-		
+		// remove the deg if 	
 		/*
 		
 		
@@ -108,7 +107,7 @@ CrossBrowser.implement({
 		// ieMatrix should return a matrix to apply.
 		document.styleSheets[0].insertRule(this.ieMatrix(el, entries));
 	}
-	, transformFunc(el, transform, tx, ty, origin){
+	, transformFunc: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 	}
@@ -139,29 +138,22 @@ CrossBrowser.implement({
 				matrix = [1, 0, 0, 1, tx, ty];
 				break;
 			case 'rotate':
-				var rad = angle * 0.0174532925 // Math.PI / 180
+				var rad = tx * 0.0174532925 // Math.PI / 180
 					, cos = Math.cos(rad)
 					, sin = Math.sin(rad);
-				string = angle + 'deg';
+				string = tx + 'deg';
 				matrix = [cos, sin, -sin, cos, 0, 0];
 				break;
 			case 'matrix':
 				break;
 		}
-		return ie ? matrix : string;
+		return !ie ? matrix : string;
 	}
 	, initialize: function(el){
 		this.el = el || '';
-		var pre = '';
-		switch (Browser.Engine.name){
-			case 'webkit': pre = '-webkit'; break;
-			case 'opera' : pre = '-o'; break;
-			case 'gecko' : if (Browser.Engine.version > 18) pre = '-moz';
-        }
-        
-		this.pre = pre;
+		this.pre = {webkit:'-webkit', opera:'-o',gecko:'-moz'}[Browser.Engine.name];
 	}
-	, scale: function(el, sx, sy, origin){
+/*	, scale: function(el, sx, sy, origin){
 		if (!sy) sy = sx;
 		var matrix = [sx, 0, 0, sy, 0, 0];
 		return this.transform('scale', el, [sx, sy], matrix, origin);
@@ -204,11 +196,11 @@ CrossBrowser.implement({
 	, matrix: function(el, matrix, origin){
 		return this.transform('matrix', el, matrix, matrix, origin);
 	}
-	, transform: function(transform, el, args, matrix, origin){
+*/	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
 		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
-		el.setStyle(this.pre + '-transform', transform + '(' + args + ')');
+		el.setStyle(this.pre + '-transform', transform + '(' + matrix + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 		return this;
 	}
@@ -257,43 +249,19 @@ CrossBrowser.implement({
 });
 
 window.addEvent('domready', function(){
-	new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
+	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
+	new CrossBrowser().transformFunc($('rot'),'rotate',25).transformFunc($('rot'),'translate',50);
 });
 /*
 ieTransform: function(el,rule){
 	var style, entries, reg = /([^(]+)\(([^)]*)\)/gi;
-	function toRadians(deg){ return (deg - 360) * Math.PI / 180; }
-	
-	el.setStyle('background-color','red');
-	if (el.getStyle('position') == 'static') el.setStyle('position','relative');
-	
 	while (style = reg.exec(rule)){
 		switch (style[1].trim().toLowerCase()){
 			case 'matrix':
 *///				var a = style[2].split(/\s*,\s*/);
 /*				entries = [a[0], a[1], a[2], a[3], parseFloat(a[5]), parseFloat(a[5])]; // 4 & 5 Should be processed from length values to pixels.
-			break;
 			case 'rotate':
 				var angle = style[2].match(/([.0-9]+)deg/i)[1]
-				, cos = Math.cos(angle)
-				, sin = Math.sin(angle);
-				entries = [cos, sin, -sin, cos, 0, 0];
-			break;
-			
-			case 'scale':
-				entries = [sx, 0, 0, sy, 0, 0]
-			case 'scalex':
-			case 'scaley': break;
-			
-			case 'skew':
-			case 'skewx':
-			case 'skewy': break;
-			
-			case 'translate':
-				entries = [1, 0, 0, 1, TX, TY];
-			break;
-			case 'translatex':
-			case 'translatey': break;
 			
 			// from here, not supported by Firefox:
 			case 'squeeze':
