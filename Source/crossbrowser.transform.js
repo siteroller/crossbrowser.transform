@@ -86,6 +86,7 @@ CrossBrowser.implement({
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
+		
 		//console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 		return this;
@@ -93,43 +94,36 @@ CrossBrowser.implement({
 	, getMatrix: function(transform, tx, ty, browser){
 		
 		var t = transform.toLowerCase()
-			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
+			, dir = t.slice(-1)
+			, rad = 0.0174532925
+			, scale = +(t.substr(0,5) == 'scale')
+			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)]
 		if (browser) return tx + unit + (ty ? ',' + ty + unit : '');
-		if (ty === 0) ty = 0.001;
 		
-		switch (t){
-			case 'scaley': ty = tx; tx = 1;
-			case 'scalex': if (!ty) ty = 1;
-			case 'scale': if (!ty) ty = tx;
-				matrix = [tx, 0, 0, ty, 0, 0]; break;
-			case 'skewx': ty = 1;
-			case 'skewy': if (!tx) tx = 1;
-			case 'skew':
-				if (!ty) ty = 0;
-				var tanx = Math.tan(tx * 0.0174532925)
-					, tany = Math.tan(ty * 0.0174532925);
-				matrix = [1, tany, tanx, 1, 0, 0];
-				break;
-			case 'translatex':
-			case 'translatey':
-			case 'translate':
-				if (!tx) tx = 0;
-				if (!ty) ty = 0;
-				matrix = [1, 0, 0, 1, tx, ty];
-				break;
-			case 'rotate':
-				var rad = tx * 0.0174532925
-					, cos = Math.cos(rad)
-					, sin = Math.sin(rad);
-				matrix = [cos, sin, -sin, cos, 0, 0];
-				break;
+		if (dir == 'y'){
+			ty = tx;
+			tx = scale;
+			t = t.slice(0,-1);
+		} else if (dir == 'x'){
+			ty = scale;
+			t = t.slice(0,-1);
+		} else if (t == 'rotate'){
+			var rad = tx * rad;
+			ty = Math.cos(rad);
+			tx = Math.sin(rad);
+		} else if (!ty) ty = scale ? tx : 0;
+		
+		return {
+			scale:[tx, 0, 0, ty, 0, 0]
+			, skew:[1, (ty * rad).tan(), (tx * rad).tan(), 1, 0, 0]
+			, trans:[1, 0, 0, 1, tx, ty]
+			, rotate:[ty, tx, -tx, ty, 0, 0]
 			// Not part of W3C spec, on ToDo list.
-			// case 'squeeze': matrix = [k, 0, 0, 1/k]
-			// case 'projection': matrix = [0,0,0,1]
-			// case 'reflection': matrix = [1,0,0,-1]
-			// case 'inversion':
-		}
-		return matrix;
+			, squeeze: [tx, 0, 0, 1/tx]
+			, projection: [0,0,0,1]
+			, reflection: [1,0,0,-1]
+			, inversion: []
+		}[t];
 	}
 	, initialize: function(el){
 		this.el = el || '';
