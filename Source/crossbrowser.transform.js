@@ -86,15 +86,15 @@ CrossBrowser.implement({
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
-		console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
+		//console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 		return this;
 	}
-	, getMatrix: function(transform, tx, ty, ie){
+	, getMatrix: function(transform, tx, ty, browser){
 		
 		var t = transform.toLowerCase()
 			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
-		if (ie) return tx + unit + (ty ? ',' + ty + unit : '');
+		if (browser) return tx + unit + (ty ? ',' + ty + unit : '');
 		if (ty === 0) ty = 0.001;
 		
 		switch (t){
@@ -105,9 +105,10 @@ CrossBrowser.implement({
 			case 'skewx': ty = 1;
 			case 'skewy': if (!tx) tx = 1;
 			case 'skew':
-				if (!ty) ty = 1;
-				string = tx+'deg,'+ty+'deg';
-				matrix = [tx, 0, 0, ty, 0, 0];
+				if (!ty) ty = 0;
+				var tanx = Math.tan(tx * 0.0174532925)
+					, tany = Math.tan(ty * 0.0174532925);
+				matrix = [1, tany, tanx, 1, 0, 0];
 				break;
 			case 'translatex':
 			case 'translatey':
@@ -125,7 +126,7 @@ CrossBrowser.implement({
 			// Not part of W3C spec, on ToDo list.
 			// case 'squeeze': matrix = [k, 0, 0, 1/k]
 			// case 'projection': matrix = [0,0,0,1]
-			// case 'shear': matrix = [1,sy,sx,1]
+			// case 'reflection': matrix = [1,0,0,-1]
 			// case 'inversion':
 		}
 		return matrix;
