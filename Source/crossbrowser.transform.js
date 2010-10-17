@@ -50,6 +50,10 @@ var CrossBrowser = new Class({
 		}
 		return content;
 	}
+	, convert: function(num){
+		return parseFloat(num)
+	
+	}
 });
 
 CrossBrowser.implement({
@@ -86,43 +90,47 @@ CrossBrowser.implement({
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if ($type(ty) == 'array'){ origin = ty; ty = null; }
-		
 		//console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
+		//alert(transform)
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 		return this;
 	}
-	, getMatrix: function(transform, tx, ty, browser){
+	, getMatrix: function(transform, x, y, browser){
 		
 		var t = transform.toLowerCase()
-			, dir = t.slice(-1)
-			, rad = 0.0174532925
-			, scale = +(t.substr(0,5) == 'scale')
 			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)]
-		if (browser) return tx + unit + (ty ? ',' + ty + unit : '');
+		if (browser) return x + unit + (y ? ',' + y + unit : '');
 		
-		if (dir == 'y'){
-			ty = tx;
-			tx = scale;
+		var end = t.slice(-1)
+			, rad = 0.0174532925
+			, rep = +(t.substr(0,5) == 'scale');
+
+		if (end == 'y'){
+			y = x;
+			x = rep;
 			t = t.slice(0,-1);
-		} else if (dir == 'x'){
-			ty = scale;
+		} else if (end == 'x'){
+			y = rep;
 			t = t.slice(0,-1);
 		} else if (t == 'rotate'){
-			var rad = tx * rad;
-			ty = Math.cos(rad);
-			tx = Math.sin(rad);
-		} else if (!ty) ty = scale ? tx : 0;
-		
+			rad *= x;
+			x = rad.sin();
+			y = rad.cos();
+		} else if (t == 'skew'){
+			x = (x * rad).tan();
+			y = (y * rad).tan() || 0;
+		} else if (!y) y = rep ? x : 0;
+
 		return {
-			scale:[tx, 0, 0, ty, 0, 0]
-			, skew:[1, (ty * rad).tan(), (tx * rad).tan(), 1, 0, 0]
-			, trans:[1, 0, 0, 1, tx, ty]
-			, rotate:[ty, tx, -tx, ty, 0, 0]
-			// Not part of W3C spec, on ToDo list.
-			, squeeze: [tx, 0, 0, 1/tx]
-			, projection: [0,0,0,1]
-			, reflection: [1,0,0,-1]
-			, inversion: []
+			scale:[x, 0, 0, y, 0, 0]
+			, skew:[1, y, x, 1, 0, 0]
+			, rotate:[y, x, -x, y, 0, 0]
+			, translate:[1, 0, 0, 1, x, y]
+			// ToDo; Not part of W3C spec.
+			, squeeze: [x, 0, 0, 1/x]
+			, project: [0, 0, 0, 1]
+			, reflect: [1, 0, 0, -1]
+			, invert: []
 		}[t];
 	}
 	, initialize: function(el){
@@ -138,6 +146,7 @@ CrossBrowser.implement({
 		return this;
 	}
 	, ieMatrix2: function(el, matrix, origin){
+		//alert(matrix)
 		origin = origin || [50,50];
 		el.setStyle(
 			Browser.Engine.version < 5 ? 'filter' : '-ms-filter',
@@ -149,6 +158,7 @@ CrossBrowser.implement({
 			
 		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2;
 		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
+		
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 		return this;
 	}
@@ -174,10 +184,6 @@ CrossBrowser.implement({
 			, height: 200
 			, width: 200
 		});
-	}
-	, convert: function(num){
-		return parseFloat(num)
-	
 	}
 });
 
