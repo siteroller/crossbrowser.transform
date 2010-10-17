@@ -59,8 +59,8 @@ var CrossBrowser = new Class({
 CrossBrowser.implement({
 	
 	parseStyles:function(){
-		if (Browser.Engine.trident) ieLoop(); // Only IE reads unrecognized styles.
-		else if (!Browser.Engine.gecko) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
+		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
+		else if (!Browser.firefox) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
 	, parse: function(css,sheet){
 		sheet = document.styleSheets[sheet];
@@ -68,11 +68,10 @@ CrossBrowser.implement({
 		
 		while (style = rule.exec(css)){
 			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-			if(Browser.Engine.webkit)
+			if(Browser.safari || Browser.chrome)
 				style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
 			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
 		}
-		
 	}
 	, ieTransform: function(el,rule){
 		// Converts a -moz-transform style into an IE filter.
@@ -89,9 +88,7 @@ CrossBrowser.implement({
 		document.styleSheets[0].insertRule(this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
 	, transformer: function(el, transform, tx, ty, origin){
-		if ($type(ty) == 'array'){ origin = ty; ty = null; }
-		//console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
-		//alert(transform)
+		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 		return this;
 	}
@@ -135,7 +132,7 @@ CrossBrowser.implement({
 	}
 	, initialize: function(el){
 		this.el = el || '';
-		this.pre = {webkit:'-webkit', opera:'-o',gecko:'-moz'}[Browser.Engine.name];
+		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
 	}
 	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
@@ -146,10 +143,9 @@ CrossBrowser.implement({
 		return this;
 	}
 	, ieMatrix2: function(el, matrix, origin){
-		//alert(matrix)
 		origin = origin || [50,50];
 		el.setStyle(
-			Browser.Engine.version < 5 ? 'filter' : '-ms-filter',
+			Browser.ie6 ? 'filter' : '-ms-filter',
 			'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]})
 		);
 		
@@ -172,7 +168,7 @@ CrossBrowser.implement({
 		};
 		
 		var matrix = a + ', M21=' + b + ', M12=' + c + ', M22=' + d
-			, filter = Browser.Engine.version < 5 ? 'filter' : '-ms-filter'
+			, filter = Browser.ie6 ? 'filter' : '-ms-filter'
 			, transform = 'progid:DXImageTransform.Microsoft.Matrix(M11=' + matrix + ', SizingMethod="auto expand")'
 			, sx = Math.abs(c) * h + (Math.abs(a) - 1) * w
 			, sy = Math.abs(b) * w + (Math.abs(d) - 1) * h;
@@ -189,5 +185,5 @@ CrossBrowser.implement({
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformer($('rot'),'rotate',25).transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
+	new CrossBrowser().transformer($('rot'),'rotate',25)//.transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
 });
