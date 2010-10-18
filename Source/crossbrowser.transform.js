@@ -87,17 +87,10 @@ CrossBrowser.implement({
 		}
 		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
-	, transformer: function(tx, ty, el, transform, origin){
-		console.log(this);
-		var self = this;
-		if (typeOf(self) == 'array'){
-			el = this[0];
-			transform = this[1];
-			self = this[2];
-		}
+	, transformer: function(el, transform, tx, ty, origin){
 		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
-		self.transform(el, transform, self.getMatrix(transform, tx, ty, self.pre), origin);
-		return el;
+		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
+		return this;
 	}
 	, getMatrix: function(transform, x, y, browser){
 		
@@ -156,7 +149,7 @@ CrossBrowser.implement({
 		
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1];
-			
+		
 		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2;
 		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
 		
@@ -186,42 +179,23 @@ CrossBrowser.implement({
 		});
 	}
 	, extendElements: function(els){
-			this.els = els || '';
 		var self = this
 			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
 	
 		methods.each(function(method){
-			//var b = self.transformer.bind([el,method,self]);
+			var f = function(tx, ty){
+				self.transformer(this, method ,tx, ty);//, self
+				return this;
+			};
 			if (els) els.each(function(el){
-				el[method] = self.transformer.bind([el,method,self]);
+				el[method] = f;
 			}); else {
-				var a = {};
-				a[method] = function(tx, ty){
-					console.log(arguments, self)
-				return self.transformer(tx, ty, this, method, self);
-				}
-				Element.implement(a);
+				var hash = {};
+				hash[method] = f;
+				Element.implement(hash);
 			}
-			//.implement({
-			//	method: self.transformer.bind([this,method,self])
-			//});
 		});
-
-		/*
-		if (els) els.each(function(el){
-			methods.each(function(method){
-				el[method] = self.transformer.bind([el,method,self]);
-			})
-		}); else methods.each(function(method){
-			Element.implement({
-				method: self.transformer.bind([el,method,self])//function(el){
-					//self.transformer.pass(el, method);
-				//}
-			})
-		})
-		*/
-		// el.woot = function(){	alert('woot');	}
-		// Element.implement({	woot:function(el){	} });
+		//this.els = els || '';
 	}
 });
 
@@ -229,6 +203,6 @@ window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
 	//var a = new CrossBrowser($$('div')).transformer($('rot'),'rotate',25).transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
 	var a = new CrossBrowser();
-	a.extendElements();//$$('#rot')
-	$('rot').rotate(75)//.scaleX(2);
+	a.extendElements($$('#rot'));
+	$('rot').rotate(75).scaleX(2);
 });
