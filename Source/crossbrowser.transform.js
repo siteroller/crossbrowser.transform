@@ -85,12 +85,19 @@ CrossBrowser.implement({
 				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]); 
 			matrix = Object.map(matrix, function(n, i){ return n + entries.i });
 		}
-		document.styleSheets[0].insertRule(this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
+		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
-	, transformer: function(el, transform, tx, ty, origin){
+	, transformer: function(tx, ty, el, transform, origin){
+		console.log(this);
+		var self = this;
+		if (typeOf(self) == 'array'){
+			el = this[0];
+			transform = this[1];
+			self = this[2];
+		}
 		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
-		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
-		return this;
+		self.transform(el, transform, self.getMatrix(transform, tx, ty, self.pre), origin);
+		return el;
 	}
 	, getMatrix: function(transform, x, y, browser){
 		
@@ -130,8 +137,7 @@ CrossBrowser.implement({
 			, invert: []
 		}[t];
 	}
-	, initialize: function(el){
-		this.el = el || '';
+	, initialize: function(){
 		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
 	}
 	, transform: function(el, transform, matrix, origin){
@@ -140,7 +146,6 @@ CrossBrowser.implement({
 		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
 		el.setStyle(this.pre + '-transform', transform + '(' + matrix + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
-		return this;
 	}
 	, ieMatrix2: function(el, matrix, origin){
 		origin = origin || [50,50];
@@ -156,7 +161,6 @@ CrossBrowser.implement({
 		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
 		
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
-		return this;
 	}
 	, ieMatrix: function(el,entries,h,w){
 		if (!h){
@@ -181,9 +185,50 @@ CrossBrowser.implement({
 			, width: 200
 		});
 	}
+	, extendElements: function(els){
+			this.els = els || '';
+		var self = this
+			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
+	
+		methods.each(function(method){
+			//var b = self.transformer.bind([el,method,self]);
+			if (els) els.each(function(el){
+				el[method] = self.transformer.bind([el,method,self]);
+			}); else {
+				var a = {};
+				a[method] = function(tx, ty){
+					console.log(arguments, self)
+				return self.transformer(tx, ty, this, method, self);
+				}
+				Element.implement(a);
+			}
+			//.implement({
+			//	method: self.transformer.bind([this,method,self])
+			//});
+		});
+
+		/*
+		if (els) els.each(function(el){
+			methods.each(function(method){
+				el[method] = self.transformer.bind([el,method,self]);
+			})
+		}); else methods.each(function(method){
+			Element.implement({
+				method: self.transformer.bind([el,method,self])//function(el){
+					//self.transformer.pass(el, method);
+				//}
+			})
+		})
+		*/
+		// el.woot = function(){	alert('woot');	}
+		// Element.implement({	woot:function(el){	} });
+	}
 });
 
 window.addEvent('domready', function(){
 	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	new CrossBrowser().transformer($('rot'),'rotate',25)//.transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
+	//var a = new CrossBrowser($$('div')).transformer($('rot'),'rotate',25).transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
+	var a = new CrossBrowser();
+	a.extendElements();//$$('#rot')
+	$('rot').rotate(75)//.scaleX(2);
 });
