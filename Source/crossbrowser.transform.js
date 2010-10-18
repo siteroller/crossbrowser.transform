@@ -88,7 +88,7 @@ CrossBrowser.implement({
 		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
 	, transformer: function(el, transform, tx, ty, origin){
-		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty, this.pre));
+		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
 		return this;
 	}
@@ -113,11 +113,13 @@ CrossBrowser.implement({
 			rad *= x;
 			x = rad.sin();
 			y = rad.cos();
-		} else if (t == 'skew'){
+		} else if (!y)
+			y = rep ? x : 0;
+		if (t == 'skew'){
 			x = (x * rad).tan();
-			y = (y * rad).tan() || 0;
-		} else if (!y) y = rep ? x : 0;
-
+			y = (y * rad).tan();
+		}
+		
 		return {
 			scale:[x, 0, 0, y, 0, 0]
 			, skew:[1, y, x, 1, 0, 0]
@@ -178,8 +180,9 @@ CrossBrowser.implement({
 			, width: 200
 		});
 	}
-	, extendElements: function(els){
-		var self = this
+	, extendDOM: function(els){
+		var hash = {}
+			, self = this
 			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
 	
 		methods.each(function(method){
@@ -187,22 +190,11 @@ CrossBrowser.implement({
 				self.transformer(this, method ,x, y, origin);
 				return this;
 			};
-			if (els) els.each(function(el){
+			!els ? hash[method] = f
+			: els.each(function(el){
 				el[method] = f;
-			}); else {
-				var hash = {};
-				hash[method] = f;
-				Element.implement(hash);
-			}
+			});
 		});
-		//this.els = els || '';
+		if (!els) Element.implement(hash);
 	}
-});
-
-window.addEvent('domready', function(){
-	//new CrossBrowser().rotate($('rot'),25).rotate($('rot'),45,[0,0]).translate($('rot'),50).scaleX($('rot'),2).skewY($('rot'),35)//;
-	//var a = new CrossBrowser($$('div')).transformer($('rot'),'rotate',25).transformer($('rot'),'rotate',45).transformer($('rot'),'scaleX', 2).transformer($('rot'),'skew',35);
-	var a = new CrossBrowser();
-	a.extendElements($$('#rot'));
-	$('rot').rotate(75).scaleX(2);
 });
