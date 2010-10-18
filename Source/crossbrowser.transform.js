@@ -183,8 +183,8 @@ CrossBrowser.implement({
 			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
 	
 		methods.each(function(method){
-			var f = function(tx, ty){
-				self.transformer(this, method ,tx, ty);//, self
+			var f = function(x, y, origin){
+				self.transformer(this, method ,x, y, origin);
 				return this;
 			};
 			if (els) els.each(function(el){
