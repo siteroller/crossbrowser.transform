@@ -68,34 +68,43 @@ CrossBrowser.implement({
 		
 		while (style = rule.exec(css)){
 			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-			if(Browser.safari || Browser.chrome)
-				style[2] = style[2].replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
+			
 			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
 		}
 	}
 	, ieTransform: function(el,rule){
-		// Converts a -moz-transform style into an IE filter.
-		var style
-			, matrix = [0,0,0,0,0,0]
-			, reg = /([^(]+)\(([^)]*)\)/gi;
-
-		while (style = reg.exec(rule)){
-			var transform = style[1].trim()
-				, t = style[2].split(/\s*,\s*/).map(this.convert)
-				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]); 
-			matrix = Object.map(matrix, function(n, i){ return n + entries.i });
-		}
+		var matrix = this.parseRule(rule);
 		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
 	}
 	, transformer: function(el, transform, tx, ty, origin){
 		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
+		if (transform == 'matrix') {
+			matrix = arguments; matrix.push();
+		}
 		return this;
+	}
+	, parseRule: function(rule, browser){
+		// Parses -moz-transform stylerules.
+		if (Browser.firefox) return rule;
+		if (this.pre == '-webkit')
+			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
+		var style
+			, matrix = [0,0,0,0,0,0]
+			, reg = /([^(]+)\(([^)]*)\)/gi;
+		while (style = reg.exec(rule)){
+			var transform = style[1].trim()
+				, t = style[2].split(/\s*,\s*/).map(this.convert)
+				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]);
+			matrix = Array.map(matrix, function(n, i){ return n + entries[i] });
+		}
+		return matrix;
 	}
 	, getMatrix: function(transform, x, y, browser){
 		
 		var t = transform.toLowerCase()
-			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)]
+			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
+		if (t == 'transform') return this.parseRule(x);
 		if (browser) return x + unit + (y ? ',' + y + unit : '');
 		
 		var end = t.slice(-1)
@@ -138,8 +147,8 @@ CrossBrowser.implement({
 	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
-		if (el.getStyle('position') == 'static') el.setStyle('position','relative');
-		el.setStyle(this.pre + '-transform', transform + '(' + matrix + ')');
+		if (el.style.position == 'static') el.setStyle('position','relative');//el.getStyle('position')
+		el.setStyle(this.pre + '-transform', transform == 'transform' ? matrix : transform + '(' + matrix + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 	}
 	, ieMatrix2: function(el, matrix, origin){
@@ -183,7 +192,7 @@ CrossBrowser.implement({
 	, extendDOM: function(els){
 		var hash = {}
 			, self = this
-			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
+			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY','transform'];
 	
 		methods.each(function(method){
 			var f = function(x, y, origin){
