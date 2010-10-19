@@ -58,7 +58,27 @@ var CrossBrowser = new Class({
 
 CrossBrowser.implement({
 	
-	parseStyles:function(){
+	initialize: function(){
+		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
+	}
+	, extendDOM: function(els){
+		var hash = {}
+			, self = this
+			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
+	
+		methods.each(function(method){
+			var f = function(x, y, origin){
+				self.transformer(this, method ,x, y, origin);
+				return this;
+			};
+			!els ? hash[method] = f
+			: els.each(function(el){
+				el[method] = f;
+			});
+		});
+		if (!els) Element.implement(hash);
+	}
+	, parseStyles:function(){
 		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
 		else if (!Browser.firefox) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
@@ -141,9 +161,6 @@ CrossBrowser.implement({
 			, invert: []
 		}[t];
 	}
-	, initialize: function(){
-		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
-	}
 	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieMatrix2(el, matrix, origin);
 		origin = origin || [50,50];
@@ -188,22 +205,5 @@ CrossBrowser.implement({
 			, height: 200
 			, width: 200
 		});
-	}
-	, extendDOM: function(els){
-		var hash = {}
-			, self = this
-			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY','transform'];
-	
-		methods.each(function(method){
-			var f = function(x, y, origin){
-				self.transformer(this, method ,x, y, origin);
-				return this;
-			};
-			!els ? hash[method] = f
-			: els.each(function(el){
-				el[method] = f;
-			});
-		});
-		if (!els) Element.implement(hash);
 	}
 });
