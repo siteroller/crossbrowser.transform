@@ -6,7 +6,7 @@
 	<script type="text/javascript" src="../Source/crossbrowser.transform.js"></script>
 	<script>
 		window.addEvent('domready', function(){
-			var transforms = new CrossBrowser().extendDOM();
+			var transforms = new CrossBrowser.Transform().extendDOM();
 			$('rot').rotate(25).rotate(45,[0,0]).translate(50).scaleX(2).skewY(35).transform('rotate(135deg) translate(12px)');
 		});
 	</script>
