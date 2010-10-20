@@ -8,6 +8,9 @@ Transform Matricis from Wikipedia - http://en.wikipedia.org/wiki
 	/Matrix_(mathematics)
 	/Linear_transformation
 	/Transformation_matrix
+Fancy Matrix multiplication based on the theory at http://easycalculation.com/matrix
+	/learn-matrix-multiplication.php
+	/matrix-multiplication.php
 */
 
 var CrossBrowser = new Class({
@@ -110,15 +113,22 @@ CrossBrowser.implement({
 		if (this.pre == '-webkit')
 			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
 		var style
-			, matrix = [0,0,0,0,0,0]
+			, a = [1,0,0,1,0,0]
 			, reg = /([^(]+)\(([^)]*)\)/gi;
 		while (style = reg.exec(rule)){
 			var transform = style[1].trim()
 				, t = style[2].split(/\s*,\s*/).map(this.convert)
-				, entries = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]);
-			matrix = Array.map(matrix, function(n, i){ return n + entries[i] });
+				, b = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]);
+			a = [
+				a[1] * b[2] + a[0] * b[0]
+				, a[2] * b[0] + a[3] * b[2]
+				, a[0] * b[1] + a[1] * b[3]
+				, a[2] * b[1] + a[3] * b[3]
+				, a[0] * b[4] + a[1] * b[5] + a[4]
+				, a[2] * b[4] + a[3] * b[5] + a[5]
+			];
 		}
-		return matrix;
+		return a;
 	}
 	, getMatrix: function(transform, x, y, browser){
 		
