@@ -68,18 +68,14 @@ CrossBrowser.implement({
 		var hash = {}
 			, self = this
 			, methods = ['transform','matrix','rotate','skew','skewX','skewY','scale','scaleX','scaleY','translate','translateX','translateY'];
-	
+		
 		methods.each(function(method){
-			var f = function(x, y, origin){
+			hash[method] = function(x, y, origin){
 				self.transformer(this, method ,x, y, origin);
 				return this;
 			};
-			!els ? hash[method] = f
-			: els.each(function(el){
-				el[method] = f;
-			});
 		});
-		if (!els) Element.implement(hash);
+		els ? $$(els).each(function(el){Object.merge(el,hash)}) : Element.implement(hash);
 	}
 	, parseStyles:function(){
 		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
