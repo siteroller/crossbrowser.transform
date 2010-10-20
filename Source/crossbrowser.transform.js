@@ -100,9 +100,6 @@ CrossBrowser.Transform = new Class({
 	, transformer: function(el, transform, tx, ty, origin){
 		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty));
 		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
-		if (transform == 'matrix') {
-			matrix = arguments; matrix.push();
-		}
 		return this;
 	}
 	, parseRule: function(rule, browser){
@@ -113,10 +110,11 @@ CrossBrowser.Transform = new Class({
 		var style
 			, a = [1,0,0,1,0,0]
 			, reg = /([^(]+)\(([^)]*)\)/gi;
+			
 		while (style = reg.exec(rule)){
 			var transform = style[1].trim()
 				, t = style[2].split(/\s*,\s*/).map(this.convert)
-				, b = transform == 'matrix' ? t : this.getMatrix(transform, t[0], t[1]);
+				, b = this.getMatrix(transform, t[0], t[1]);
 			a = [
 				a[1] * b[2] + a[0] * b[0]
 				, a[2] * b[0] + a[3] * b[2]
@@ -133,6 +131,10 @@ CrossBrowser.Transform = new Class({
 		var t = transform.toLowerCase()
 			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
 		if (t == 'transform') return this.parseRule(x);
+		if (t == 'matrix'){
+			var suf = Browser.firefox ? 'px' : '';
+			return [x[0], x[2], x[1], x[3], x[4]||0 + suf, x[5]||0 + suf];
+		}
 		if (browser) return x + unit + (y ? ',' + y + unit : '');
 		
 		var end = t.slice(-1)
@@ -203,6 +205,7 @@ CrossBrowser.Transform = new Class({
 
 CrossBrowser.Transform.implement({
 	ieMatrix: function(el, matrix, origin){
+		
 		origin = origin || [50,50];
 		el.setStyle(
 			Browser.ie6 ? 'filter' : '-ms-filter',
@@ -211,9 +214,9 @@ CrossBrowser.Transform.implement({
 		
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1];
-		
-		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2;
-		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
+			
+		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + +matrix[4] - el.offsetWidth / 2;
+		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + +matrix[5] - el.offsetHeight / 2;
 		
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 	}
