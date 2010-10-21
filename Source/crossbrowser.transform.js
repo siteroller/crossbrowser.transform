@@ -132,7 +132,7 @@ CrossBrowser.Transform = new Class({
 			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
 		if (t == 'transform') return this.parseRule(x);
 		if (t == 'matrix'){
-			var suf = Browser.firefox ? 'px' : '';
+			var suf = Browser.firefox ? 'px' : 0;
 			return [x[0], x[2], x[1], x[3], x[4]||0 + suf, x[5]||0 + suf];
 		}
 		if (browser) return x + unit + (y ? ',' + y + unit : '');
@@ -213,10 +213,12 @@ CrossBrowser.Transform.implement({
 		);
 		
 		var x = el.clientWidth / 2 - origin[0]
-			, y = el.clientHeight / 2 - origin[1];
-			
-		el.style.left = x * matrix[0] + y * matrix[2] + origin[0] + +matrix[4] - el.offsetWidth / 2;
-		el.style.top =  x * matrix[1] + y * matrix[3] + origin[1] + +matrix[5] - el.offsetHeight / 2;
+			, y = el.clientHeight / 2 - origin[1]
+			, left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2
+			, top = x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
+		
+		el.style.left = left;
+		el.style.top = top;
 		
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 	}
