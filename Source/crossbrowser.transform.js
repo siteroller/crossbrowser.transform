@@ -73,7 +73,9 @@ CrossBrowser.Transform = new Class({
 		
 		methods.each(function(method){
 			hash[method] = function(x, y, origin){
-				self.transformer(this, method ,x, y, origin);
+				if (Type.isArray(y)){ origin = y; y = null; }
+				var matrix = self.getMatrix(method, x, y);
+				self.transform(this, method, matrix, origin);
 				return this;
 			};
 		});
@@ -96,11 +98,6 @@ CrossBrowser.Transform = new Class({
 	, ieTransform: function(el,rule){
 		var matrix = this.parseRule(rule);
 		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
-	}
-	, transformer: function(el, transform, tx, ty, origin){
-		if (typeOf(ty) == 'array'){ origin = ty; ty = null; }  //console.log(el, transform, this.getMatrix(transform, tx, ty));
-		this.transform(el, transform, this.getMatrix(transform, tx, ty, this.pre), origin);
-		return this;
 	}
 	, parseRule: function(rule, browser){
 		// Parses -moz-transform stylerules.
@@ -126,7 +123,7 @@ CrossBrowser.Transform = new Class({
 		}
 		return a;
 	}
-	, getMatrix: function(transform, x, y, browser){
+	, getMatrix: function(transform, x, y){
 		
 		var t = transform.toLowerCase()
 			, unit = {c:'', k:'deg', r:'px', o:'deg'}[t.substr(1,1)];
@@ -135,7 +132,7 @@ CrossBrowser.Transform = new Class({
 			var suf = Browser.firefox ? 'px' : 0;
 			return [x[0], x[2], x[1], x[3], x[4]||0 + suf, x[5]||0 + suf];
 		}
-		if (browser) return x + unit + (y ? ',' + y + unit : '');
+		if (this.pre) return x + unit + (y ? ',' + y + unit : '');
 		
 		var end = t.slice(-1)
 			, rad = 0.0174532925
