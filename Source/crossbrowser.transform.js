@@ -34,7 +34,7 @@ var CrossBrowser = new Class({
 		Array.each(document.styleSheets, function(sheet,i){
 			Array.each(sheet.rules || sheet.cssRules, function(rule,j){
 				var pos = rule.style['moz-transform'];
-				if (pos) $$(rule.selectorText).each(function(el){ self.ieTransform(el,pos) });
+				if (pos) $$(rule.selectorText).each(function(el){ self.loopMethod(el,pos) });
 			});
 		});
 	}
@@ -80,48 +80,6 @@ CrossBrowser.Transform = new Class({
 			};
 		});
 		els ? $$(els).each(function(el){Object.merge(el,hash)}) : Element.implement(hash);
-	}
-	, parseStyles:function(){
-		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
-		else if (!Browser.firefox) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
-	}
-	, parse: function(css,sheet){
-		sheet = document.styleSheets[sheet];
-		var style, rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
-		
-		while (style = rule.exec(css)){
-			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-			
-			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		}
-	}
-	, ieTransform: function(el,rule){
-		var matrix = this.parseRule(rule);
-		document.styleSheets[0].insertRule(style[1], this.ieMatrix(el, matrix)); // ieMatrix should be reworked to return a matrix to apply.
-	}
-	, parseRule: function(rule, browser){
-		// Parses -moz-transform stylerules.
-		if (Browser.firefox) return rule;
-		if (this.pre == '-webkit')
-			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
-		var style
-			, a = [1,0,0,1,0,0]
-			, reg = /([^(]+)\(([^)]*)\)/gi;
-			
-		while (style = reg.exec(rule)){
-			var transform = style[1].trim()
-				, t = style[2].split(/\s*,\s*/).map(this.convert)
-				, b = this.getMatrix(transform, t[0], t[1]);
-			a = [
-				a[1] * b[2] + a[0] * b[0]
-				, a[2] * b[0] + a[3] * b[2]
-				, a[0] * b[1] + a[1] * b[3]
-				, a[2] * b[1] + a[3] * b[3]
-				, a[0] * b[4] + a[1] * b[5] + a[4]
-				, a[2] * b[4] + a[3] * b[5] + a[5]
-			];
-		}
-		return a;
 	}
 	, getMatrix: function(transform, x, y){
 		
@@ -169,13 +127,13 @@ CrossBrowser.Transform = new Class({
 		}[t];
 	}
 	, transform: function(el, transform, matrix, origin){
-		if (!this.pre) return this.ieMatrix(el, matrix, origin);
+		if (!this.pre) return this.ieTransform(el, matrix, origin);
 		origin = origin || [50,50];
 		if (el.style.position == 'static') el.setStyle('position','relative');//el.getStyle('position')
 		el.setStyle(this.pre + '-transform', transform == 'transform' ? matrix : transform + '(' + matrix + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 	}
-	, ieMatrix: function(el,entries,h,w){
+	, ieTransform: function(el,entries,h,w){
 		if (!h){
 			var size = el.getCoordinates();
 			h = size.height / 2;
@@ -198,10 +156,52 @@ CrossBrowser.Transform = new Class({
 			, width: 200
 		});
 	}
+	, parseStyles:function(){
+		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
+		else if (!Browser.firefox) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
+	}
+	, parse: function(css,sheet){
+		sheet = document.styleSheets[sheet];
+		var style, rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
+		
+		while (style = rule.exec(css)){
+			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
+			
+			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		}
+	}
+	, parseRule: function(rule, browser){
+		// Parses -moz-transform stylerules.
+		if (Browser.firefox) return rule;
+		if (this.pre == '-webkit')
+			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
+		var style
+			, a = [1,0,0,1,0,0]
+			, reg = /([^(]+)\(([^)]*)\)/gi;
+			
+		while (style = reg.exec(rule)){
+			var transform = style[1].trim()
+				, t = style[2].split(/\s*,\s*/).map(this.convert)
+				, b = this.getMatrix(transform, t[0], t[1]);
+			a = [
+				a[1] * b[2] + a[0] * b[0]
+				, a[2] * b[0] + a[3] * b[2]
+				, a[0] * b[1] + a[1] * b[3]
+				, a[2] * b[1] + a[3] * b[3]
+				, a[0] * b[4] + a[1] * b[5] + a[4]
+				, a[2] * b[4] + a[3] * b[5] + a[5]
+			];
+		}
+		return a;
+	}
+	, loopMethod: function(el,rule){
+		var matrix = this.parseRule(rule);
+		document.styleSheets[0].insertRule(style[1], this.ieTransform(el, matrix)); // ieTransform should be reworked to return a matrix to apply.
+	}
 });
 
 CrossBrowser.Transform.implement({
-	ieMatrix: function(el, matrix, origin){
+	ieTransform: function(el, matrix, origin){
 		
 		origin = origin || [50,50];
 		el.setStyle(
@@ -220,3 +220,25 @@ CrossBrowser.Transform.implement({
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 	}
 });
+
+/*
+Developer Info:
+
+Function Map:
+initialize() Set browser-specific style prefix
+extendDOM(els) Extend DOM to include shortcut functions. [external]
+	//DOMMethod() Instance of generic extendDOM.
+	getMatrix(transform, x, y, browser) Returns the matrix or style of one rule.
+		[parseRule] If input is string, sends it to parseRule.
+		transform(el, transform, matrix, origin) Applies transform in real browsers.
+			ieTransform(el,entries,h,w) Applies transform in IE.
+parseStyles() Parse Stylesheets. [external]
+	loadStylesheets() Load stylesheets for parsing [parent]
+		parse(css,sheet) parse one stylsheet.
+			stripComments(content, type) Remove comments from stylesheets. [parent]
+			parseRule(rule, browser) Parses -moz-transform stylerules. Returns the matrix/style of multiple rules.
+				[getMatrix]
+	ieLoop() Loop through all IE styles. [parent]
+		loopMethod(el,rule) Adds parsed rule to stylesheet. Instance of generic ieLoop.
+			[parseRule]
+*/
