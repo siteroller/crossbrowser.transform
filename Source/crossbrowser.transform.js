@@ -183,8 +183,7 @@ CrossBrowser.Transform = new Class({
 			var transform = style[1].trim()
 				, t = style[2].split(/\s*,\s*/).map(this.convert)
 				, b = this.getMatrix(transform, t[0], t[1]);
-			a = [
-				a[1] * b[2] + a[0] * b[0]
+			a = [ a[1] * b[2] + a[0] * b[0]
 				, a[2] * b[0] + a[3] * b[2]
 				, a[0] * b[1] + a[1] * b[3]
 				, a[2] * b[1] + a[3] * b[3]
@@ -230,6 +229,7 @@ If you are good at math, code, or putting things through their paces, fork and h
 For some perspective, read the comments:
 	http://ajaxian.com/archives/is-there-something-to-the-crazy-comma-first-style
 	http://gist.github.com/357981
+	http://github.com/tibbe/haskell-style-guide/blob/master/haskell-style.md
 
 2. And yeah, we really did define ieTransform just to overwrite it using .implement.
 #1 is based on totalitarianism's concepts, and provides a smoother result for animations in IE.
