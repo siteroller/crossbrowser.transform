@@ -223,8 +223,21 @@ CrossBrowser.Transform.implement({
 
 /*
 Developer Info:
+0. Yes, we want your help. 
+If you are good at math, code, or putting things through their paces, fork and hack! 
 
-Function Map:
+1. Yup, we put commas first. Haskel style.
+For some perspective, read the comments:
+	http://ajaxian.com/archives/is-there-something-to-the-crazy-comma-first-style
+	http://gist.github.com/357981
+
+2. And yeah, we really did define ieTransform just to overwrite it using .implement.
+#1 is based on totalitarianism's concepts, and provides a smoother result for animations in IE.
+But I have not been able to work out setting the origin. Yet.
+#2 is based on Dylan's math, and works.
+If you can work out #1, we'll put your name in lights!
+
+3. Function Map:
 initialize() Set browser-specific style prefix
 extendDOM(els) Extend DOM to include shortcut functions. [external]
 	//DOMMethod() Instance of generic extendDOM.
@@ -241,4 +254,10 @@ parseStyles() Parse Stylesheets. [external]
 	ieLoop() Loop through all IE styles. [parent]
 		loopMethod(el,rule) Adds parsed rule to stylesheet. Instance of generic ieLoop.
 			[parseRule]
+convert() [parent]
+
+4. To Do:
+Convert should take percentages, inches, and everything else.
+Reflections, etc. should be supported.
+Any requests?
 */
