@@ -20,7 +20,8 @@ var CrossBrowser = new Class({
 	, loadStylesheets: function(){
 		var self = this;
 		$$('style').each(function(el,i){
-			self.parse(el.get('html'),i);
+			var styles = self.stripComments(el.get('html'),'css');
+			self.parse(styles,i);
 		});
 		$$('link[rel=stylesheet]').each(function(el,i){
 			//switch to regex to catch case insensitive domain name changes
@@ -41,17 +42,16 @@ var CrossBrowser = new Class({
 	
 	, stripComments: function(content, type){
 		switch(type){
+			case 'css':
+				return content.replace(/\/\*[^*]*\*\//g, '');
 			case 'js':
+				return content.replace(/\/\/.+?(?=\n|\r|$)|\/\*[\s\S]+?\*\//g, '').replace(/@[^\{\};]*;|@[^\{\};]*\{[^\}]*\}/g, '');
 				// 2nd regex looks like it will cough on regex's with '/*', but claims it works. should be rewritten.
-				content = content.replace(/\/\/.+?(?=\n|\r|$)|\/\*[\s\S]+?\*\//g, '').replace(/@[^\{\};]*;|@[^\{\};]*\{[^\}]*\}/g, '');
-				//content = content.replace(/(/\*[\u0000-\uFFFF]*?(?=\*\/)\*/|//[^\u000A|\u000D|\u2028|\u2029]*)/, '');
-			break;
+				// return content.replace(/(/\*[\u0000-\uFFFF]*?(?=\*\/)\*/|//[^\u000A|\u000D|\u2028|\u2029]*)/, '');
 			case 'htm':
+				return content.replace(/<!--|-->/g, '');
 				// to remove first tag, huh? Have copied it till I can think about it.
-				content = content.replace(/<!--|-->/, '');
-			break;
 		}
-		return content;
 	}
 	, convert: function(num){
 		return parseFloat(num)
@@ -162,16 +162,26 @@ CrossBrowser.Transform = new Class({
 		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
 	, parse: function(css,sheet){
-		sheet = document.styleSheets[sheet];
-		//var n1 = '[^{]+', n2 = '-moz(-transform[^;}]+)', n3 = '-moz(-transform-origin[^;}]+)'
-		//	, regex = '(?:^|})({n1})(?:{n2}{n3}|{n3}{n2}|{n2}|{n3})'.substitute({n2:n2,n3:n3});
-		
 		var style
-		  , transf = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform[^-][^;}]+)+', 'gi')
-		  , origin = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform-origin[^;}]+)+', 'gi');
-		
-		while (style = transf.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		while (style = origin.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		  , mt = '-moz(-transform[^-][^;}]+)'
+		  , mto = '-moz(-transform-origin[^;}]+)'
+		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?(?:'+ mt + '|' + mto + ')(?:'+ mt +'|'+ mto +'|[^}])*', 'gi');
+		  /*
+		  , t = '-moz(-transform[^;}]+)'
+		  , w = '(?:([^-])|(-origin))'
+		  , wt = '-moz(-transform(?:([^-])|(-origin))[^;}]+)'
+		  , rr = '(?:^|})([^{]+)[^}]+?'+t+'(?:'+t+'|[^}])*'
+		  //, rule ='(?:^|})([^{]+)[^}]+?-moz(-transform[^;}]+)(?:-moz(-transform[^;}]+)|[^}])*';
+		  //, rule ='(?:^|})([^{]+)[^}]+?-moz(-transform[^;}]+)(?:-moz(-transform[^;}]+)|[^}])*';
+		  //, transf = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform[^-][^;}]+)', 'gi')
+		  //, origin = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform-origin[^;}]+)', 'gi');
+		//while (style = transf.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		//while (style = origin.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		*/
+		sheet = document.styleSheets[sheet];
+		while (style = rule.exec(css)){
+			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		}
 	}
 	, parseRule: function(rule, browser){
 		// Parses -moz-transform stylerules.
