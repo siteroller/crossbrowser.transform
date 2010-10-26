@@ -80,6 +80,7 @@ CrossBrowser.Transform = new Class({
 			};
 		});
 		els ? $$(els).each(function(el){Object.merge(el,hash)}) : Element.implement(hash);
+		return this;
 	}
 	, getMatrix: function(transform, x, y){
 		
@@ -158,22 +159,25 @@ CrossBrowser.Transform = new Class({
 	}
 	, parseStyles:function(){
 		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
-		else if (!Browser.firefox) loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
+		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
 	, parse: function(css,sheet){
 		sheet = document.styleSheets[sheet];
-		var style, rule = new RegExp(regexs.prefixes + '-moz(-transform[^;}]+)', 'gi');
+		//var n1 = '[^{]+', n2 = '-moz(-transform[^;}]+)', n3 = '-moz(-transform-origin[^;}]+)'
+		//	, regex = '(?:^|})({n1})(?:{n2}{n3}|{n3}{n2}|{n2}|{n3})'.substitute({n2:n2,n3:n3});
 		
-		while (style = rule.exec(css)){
-			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-			
-			document.styleSheets[0].insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		}
+		var style
+		  , transf = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform[^-][^;}]+)+', 'gi')
+		  , origin = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform-origin[^;}]+)+', 'gi');
+		
+		while (style = transf.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+		while (style = origin.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
 	}
 	, parseRule: function(rule, browser){
 		// Parses -moz-transform stylerules.
 		if (Browser.firefox) return rule;
 		if (this.pre == '-webkit')
+			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
 			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
 		var style
 			, a = [1,0,0,1,0,0]

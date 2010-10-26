@@ -7,13 +7,14 @@
 	<script>
 		window.addEvent('domready', function(){
 			var transforms = new CrossBrowser.Transform().extendDOM();
+			transforms.parseStyles();
 			$('rot').rotate(25).rotate(45,[0,0]).translate(50).scaleX(2).skewY(35).transform('rotate(135deg) translate(12px)')//.matrix([0,-1,1,0,0,12], [50,100]);
 		});
 	</script>
 	<style type='text/css'>
 		div{ height:100px; width:200px; position:absolute; top:0; left:0; }
 		.back { background-color:yellow; }
-		#rot { background-color:blue; } 
+		#rot { background-color:blue; -moz-transform:rotate(135deg) translate(12px); -moz-transform-origin:50px 50px} 
 	</style>
 </head>
 <body>
