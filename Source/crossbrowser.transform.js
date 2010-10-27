@@ -16,7 +16,6 @@ Fancy Matrix multiplication based on the theory at http://easycalculation.com/ma
 var CrossBrowser = new Class({
 
 	loopstop: 0
-
 	, loadStylesheets: function(){
 		var self = this;
 		$$('style').each(function(el,i){
@@ -28,7 +27,6 @@ var CrossBrowser = new Class({
 			if (href.contains('://') && href.contains(document.domain)) new Request({onSuccess:self.parse});
 		});
 	}
-
 	, ieLoop: function(){
 		var self = this;
 		// Loop through stylesheets. IE allows access to styles it doesn't recognise.
@@ -39,19 +37,52 @@ var CrossBrowser = new Class({
 			});
 		});
 	}
-	
 	, stripComments: function(content, type){
 		switch(type){
-			case 'css':
-				return content.replace(/\/\*[^*]*\*\//g, '');
-			case 'js':
-				return content.replace(/\/\/.+?(?=\n|\r|$)|\/\*[\s\S]+?\*\//g, '').replace(/@[^\{\};]*;|@[^\{\};]*\{[^\}]*\}/g, '');
-				// 2nd regex looks like it will cough on regex's with '/*', but claims it works. should be rewritten.
-				// return content.replace(/(/\*[\u0000-\uFFFF]*?(?=\*\/)\*/|//[^\u000A|\u000D|\u2028|\u2029]*)/, '');
-			case 'htm':
-				return content.replace(/<!--|-->/g, '');
-				// to remove first tag, huh? Have copied it till I can think about it.
+			case 'css':	return content.replace(/\/\*[^*]*\*\//g, '');
+			case 'htm': return content.replace(/<!--|-->/g, '');
+			case 'js':  return content.replace(/\/\/.+?(?=\n|\r|$)|\/\*[\s\S]+?\*\//g, '')
+				.replace(/@[^\{\};]*;|@[^\{\};]*\{[^\}]*\}/g, '');	
 		}
+		// 2nd js regex looks like it will cough on regex's with '/*', but claims it works. should be rewritten.
+		// return content.replace(/(/\*[\u0000-\uFFFF]*?(?=\*\/)\*/|//[^\u000A|\u000D|\u2028|\u2029]*)/, '');
+		// html regex to remove first tag, huh? Have copied it till I can think about it.	
+	}
+	, parse: function(css, sheet){
+		sheet = document.styleSheets[sheet];
+		var styles
+		  , self = this
+		  , rules = Object.keys(Object.clone(this.parseObj)).join('[^;}]+)|(')
+		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?-moz-(?:(' + rules + '[^;}]+))(?:-moz-(' + rules + '[^;}]+)|[^}])*', 'gi')
+		  , methods = Object.values(Object.clone(this.parseObj))
+		  , m = methods.length;
+
+		if (styles = rule.exec(css)){
+			styles.shift();
+			var is, el = styles.shift();
+			styles.each(function(style,i){
+				var method = methods[i%m];
+				if (style) is = Type.isString(method) ? self[method](style) : method(style);
+				sheet.insertRule(el + '{' + self.pre + '-' + is + '}');
+			});
+		}
+		/*	
+			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
+			//for (  i+=1) somehow, style should be empty of all but the last valid of each multiple.
+			// may pay to handle each
+			
+			for (var v, l = style.length, i = 1; i < l; i++){
+				v = i%m;
+				r[v] = 
+			}
+			style.each(function(s,i){
+				r[--i%m] = s;
+			})
+			rules = { '-moz(-transform[^-]': function(){}
+				, '-moz(-transform-origin': function(){}
+		}
+		, rule = new RegExp('(?:^|})([^{]+)[^}]+?(?:' + rules + '[^;}]+))(?:' + rules + '[^;}]+)|[^}])*', 'gi');
+		*/
 	}
 	, convert: function(num){
 		return parseFloat(num)
@@ -65,6 +96,8 @@ CrossBrowser.Transform = new Class({
 	
 	, initialize: function(){
 		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
+		//this.parseObj = this.parseObj();
+		//console.log(this.parseObj);
 	}
 	, extendDOM: function(els){
 		var hash = {}
@@ -73,7 +106,7 @@ CrossBrowser.Transform = new Class({
 		
 		methods.each(function(method){
 			hash[method] = function(x, y, origin){
-				if (Type.isArray(y)){ origin = y; y = null; }
+				if (Type.isArray(y)){ origin = y; y = null; } // if (Type.isArray(y)) origin = y, y = null;
 				var matrix = self.getMatrix(method, x, y);
 				self.transform(this, method, matrix, origin);
 				return this;
@@ -157,11 +190,15 @@ CrossBrowser.Transform = new Class({
 			, width: 200
 		});
 	}
-	, parseStyles:function(){
+	, parseObj: { 'transform[^-]': 'parseRule'
+				, 'transform-origin': 'parseRule'
+	}
+	, parseStyles: function(){
 		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
 		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
-	, parse: function(css,sheet){
+
+	, parse1: function(css,sheet){
 		var style
 		  , mt = '-moz(-transform[^-][^;}]+)'
 		  , mto = '-moz(-transform-origin[^;}]+)'
@@ -183,8 +220,9 @@ CrossBrowser.Transform = new Class({
 			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
 		}
 	}
-	, parseRule: function(rule, browser){
+	, parseRule: function(rule){
 		// Parses -moz-transform stylerules.
+		console.log('yay')
 		if (Browser.firefox) return rule;
 		if (this.pre == '-webkit')
 			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
