@@ -49,16 +49,25 @@ var CrossBrowser = new Class({
 		// html regex to remove first tag, huh? Have copied it till I can think about it.	
 	}
 	, parse: function(css, sheet){
+		/*
+		*	After having wasted many hours on the various regex combinations, I am giving up on regex for now.
+		*	When I have time for more benchmarking, I hope to reapply some of the lessons and save a few miliseconds here and there :)
+		*	See http://stackoverflow.com/questions/4038177/regex-incorrect-in-firefox-and-safari-chrome
+		*/
 		sheet = document.styleSheets[sheet];
 		var styles
 		  , self = this
 		  , rules = Object.keys(Object.clone(this.parseObj)).join('[^;}]+)|(')
-		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?-moz-(?:(' + rules + '[^;}]+))(?:-moz-(' + rules + '[^;}]+)|[^}])*', 'gi')
+		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?-moz-(?:(' + rules + '[^;}]+))(?:-moz-(?:(' + rules + '[^;}]+))|[^}])*', 'gi')
 		  , methods = Object.values(Object.clone(this.parseObj))
 		  , m = methods.length;
+console.log(rule)
+console.log(rule.exec(css));
+console.log(rule.exec(css));
 
 		if (styles = rule.exec(css)){
-			styles.shift();
+			console.log(styles);
+			//styles.shift();
 			var is, el = styles.shift();
 			styles.each(function(style,i){
 				var method = methods[i%m];
@@ -70,7 +79,7 @@ var CrossBrowser = new Class({
 			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
 			//for (  i+=1) somehow, style should be empty of all but the last valid of each multiple.
 			// may pay to handle each
-			
+			//(?:(transform[^-][^;}]+)|(transform-origin[^;}]+)|[^}])*
 			for (var v, l = style.length, i = 1; i < l; i++){
 				v = i%m;
 				r[v] = 
