@@ -49,49 +49,24 @@ var CrossBrowser = new Class({
 		// html regex to remove first tag, huh? Have copied it till I can think about it.	
 	}
 	, parse: function(css, sheet){
-		/*
-		*	After having wasted many hours on the various regex combinations, I am giving up on regex for now.
-		*	When I have time for more benchmarking, I hope to reapply some of the lessons and save a few miliseconds here and there :)
-		*	See http://stackoverflow.com/questions/4038177/regex-incorrect-in-firefox-and-safari-chrome
-		*/
+		var self = this;
 		sheet = document.styleSheets[sheet];
-		var styles
-		  , self = this
-		  , rules = Object.keys(Object.clone(this.parseObj)).join('[^;}]+)|(')
-		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?-moz-(?:(' + rules + '[^;}]+))(?:-moz-(?:(' + rules + '[^;}]+))|[^}])*', 'gi')
-		  , methods = Object.values(Object.clone(this.parseObj))
-		  , m = methods.length;
-console.log(rule)
-console.log(rule.exec(css));
-console.log(rule.exec(css));
-
-		if (styles = rule.exec(css)){
-			console.log(styles);
-			//styles.shift();
-			var is, el = styles.shift();
-			styles.each(function(style,i){
-				var method = methods[i%m];
-				if (style) is = Type.isString(method) ? self[method](style) : method(style);
-				sheet.insertRule(el + '{' + self.pre + '-' + is + '}');
-			});
-		}
-		/*	
-			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
-			//for (  i+=1) somehow, style should be empty of all but the last valid of each multiple.
-			// may pay to handle each
-			//(?:(transform[^-][^;}]+)|(transform-origin[^;}]+)|[^}])*
-			for (var v, l = style.length, i = 1; i < l; i++){
-				v = i%m;
-				r[v] = 
-			}
-			style.each(function(s,i){
-				r[--i%m] = s;
+		
+		css.split('}').each(function(rule){
+			self.parseObj.each(function(find){
+				var reg = rule.match(find[1]);
+				if (reg) sheet
+					.insertRule('{el}{pre}-{reg}:{is}{cb}'
+						.substitute({ el: rule.split('{')[0].trim() + '{'
+									, pre: find[0] ? self.pre : ''
+									, reg: reg[0]
+									, is: (Type.isFunction(find[2]) ? find[2] : self[find[2]])
+										.bind(self)(rule.split(find[1]).pop().match(/:([^;}]+)/i)[1])
+									, cb: '}'
+						})
+					);
 			})
-			rules = { '-moz(-transform[^-]': function(){}
-				, '-moz(-transform-origin': function(){}
-		}
-		, rule = new RegExp('(?:^|})([^{]+)[^}]+?(?:' + rules + '[^;}]+))(?:' + rules + '[^;}]+)|[^}])*', 'gi');
-		*/
+		});
 	}
 	, convert: function(num){
 		return parseFloat(num)
@@ -199,39 +174,15 @@ CrossBrowser.Transform = new Class({
 			, width: 200
 		});
 	}
-	, parseObj: { 'transform[^-]': 'parseRule'
-				, 'transform-origin': 'parseRule'
-	}
+	, parseObj: [ [1, /transform(?!-)/i, 'parseRule']
+				, [1, /transform-origin/i, 'parseRule']
+	]
 	, parseStyles: function(){
 		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
 		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
-
-	, parse1: function(css,sheet){
-		var style
-		  , mt = '-moz(-transform[^-][^;}]+)'
-		  , mto = '-moz(-transform-origin[^;}]+)'
-		  , rule = new RegExp('(?:^|})([^{]+)[^}]+?(?:'+ mt + '|' + mto + ')(?:'+ mt +'|'+ mto +'|[^}])*', 'gi');
-		  /*
-		  , t = '-moz(-transform[^;}]+)'
-		  , w = '(?:([^-])|(-origin))'
-		  , wt = '-moz(-transform(?:([^-])|(-origin))[^;}]+)'
-		  , rr = '(?:^|})([^{]+)[^}]+?'+t+'(?:'+t+'|[^}])*'
-		  //, rule ='(?:^|})([^{]+)[^}]+?-moz(-transform[^;}]+)(?:-moz(-transform[^;}]+)|[^}])*';
-		  //, rule ='(?:^|})([^{]+)[^}]+?-moz(-transform[^;}]+)(?:-moz(-transform[^;}]+)|[^}])*';
-		  //, transf = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform[^-][^;}]+)', 'gi')
-		  //, origin = new RegExp('(?:^|})([^{]+)[^}]+-moz(-transform-origin[^;}]+)', 'gi');
-		//while (style = transf.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		//while (style = origin.exec(css)) sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		*/
-		sheet = document.styleSheets[sheet];
-		while (style = rule.exec(css)){
-			sheet.insertRule(style[1] + '{' + this.pre + style[2] + '}');
-		}
-	}
 	, parseRule: function(rule){
 		// Parses -moz-transform stylerules.
-		console.log('yay')
 		if (Browser.firefox) return rule;
 		if (this.pre == '-webkit')
 			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
