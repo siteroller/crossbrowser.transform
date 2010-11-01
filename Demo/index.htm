@@ -6,9 +6,9 @@
 	<script type="text/javascript" src="../Source/crossbrowser.transform.js"></script>
 	<script>
 		window.addEvent('domready', function(){
-			var transforms = new CrossBrowser.Transform().extendDOM();
-			transforms.parseStyles();
-			//$('rot').rotate(25).rotate(45,[0,0]).translate(50).scaleX(2).skewY(35).transform('rotate(135deg) translate(12px)')//.matrix([0,-1,1,0,0,12], [50,100]);
+			var transforms = new CrossBrowser.Transform().parseStyles();
+			//var transforms1 = new Transform().extendDOM();
+			//$('rot').rotate(25).rotate(45,[0,0]).translate(50).scaleX(2).skewY(35).transform('rotate(135deg) translate(12px)').matrix([0,-1,1,0,0,12], [50,100]);
 		});
 	</script>
 	<style type='text/css'>

@@ -56,13 +56,12 @@ var CrossBrowser = new Class({
 			self.parseObj.each(function(find){
 				var reg = rule.match(find[1]);
 				if (reg) sheet
-					.insertRule('{el}{pre}-{reg}:{is}{cb}'
-						.substitute({ el: rule.split('{')[0].trim() + '{'
+					.insertRule('{el}{{pre}-{reg}:{is}}'
+						.substitute({ el: rule.split('{')[0].trim()
 									, pre: find[0] ? self.pre : ''
 									, reg: reg[0]
 									, is: (Type.isFunction(find[2]) ? find[2] : self[find[2]])
 										.bind(self)(rule.split(find[1]).pop().match(/:([^;}]+)/i)[1])
-									, cb: '}'
 						})
 					);
 			})
@@ -192,9 +191,9 @@ var Transform = new Class({
 		}
 		return a;
 	}
-	, convert: function(num){
-		return parseFloat(num)
-	
+	, convert: function(num,el){
+		snum = num.trim().split(/(\d+)/);
+		return parseFloat(num);
 	}
 });
 
