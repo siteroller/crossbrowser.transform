@@ -68,20 +68,14 @@ var CrossBrowser = new Class({
 			})
 		});
 	}
-	, convert: function(num){
-		return parseFloat(num)
-	
-	}
 });
 
-CrossBrowser.Transform = new Class({
+var Transform = new Class({
 	
 	Implements: CrossBrowser
 	
 	, initialize: function(){
 		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
-		//this.parseObj = this.parseObj();
-		//console.log(this.parseObj);
 	}
 	, extendDOM: function(els){
 		var hash = {}
@@ -174,13 +168,6 @@ CrossBrowser.Transform = new Class({
 			, width: 200
 		});
 	}
-	, parseObj: [ [1, /transform(?!-)/i, 'parseRule']
-				, [1, /transform-origin/i, 'parseRule']
-	]
-	, parseStyles: function(){
-		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
-		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
-	}
 	, parseRule: function(rule){
 		// Parses -moz-transform stylerules.
 		if (Browser.firefox) return rule;
@@ -205,15 +192,15 @@ CrossBrowser.Transform = new Class({
 		}
 		return a;
 	}
-	, loopMethod: function(el,rule){
-		var matrix = this.parseRule(rule);
-		document.styleSheets[0].insertRule(style[1], this.ieTransform(el, matrix)); // ieTransform should be reworked to return a matrix to apply.
+	, convert: function(num){
+		return parseFloat(num)
+	
 	}
 });
 
-CrossBrowser.Transform.implement({
+Transform.implement({
+	
 	ieTransform: function(el, matrix, origin){
-		
 		origin = origin || [50,50];
 		el.setStyle(
 			Browser.ie6 ? 'filter' : '-ms-filter',
@@ -232,12 +219,30 @@ CrossBrowser.Transform.implement({
 	}
 });
 
+CrossBrowser.Transform = new Class({
+	
+	Implements: [Transform, CrossBrowser]
+	
+	, parseStyles: function(){
+		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
+		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
+	}
+	, parseObj: [ [1, /transform(?!-)/i, 'parseRule']
+				, [1, /transform-origin/i, 'parseRule']
+	]
+	, loopMethod: function(el,rule){
+		var matrix = this.parseRule(rule);
+		document.styleSheets[0].insertRule(style[1], this.ieTransform(el, matrix)); // ieTransform should be reworked to return a matrix to apply.
+	}
+});
+
+
 /*
 Developer Info:
 0. Yes, we want your help. 
 If you are good at math, code, or putting things through their paces, fork and hack! 
 
-1. Yup, we put commas first. Haskel style.
+1. Yup, we put commas first. Haskell style.
 For some perspective, read the comments:
 	http://ajaxian.com/archives/is-there-something-to-the-crazy-comma-first-style
 	http://gist.github.com/357981
@@ -245,11 +250,13 @@ For some perspective, read the comments:
 
 2. And yeah, we really did define ieTransform just to overwrite it using .implement.
 #1 is based on totalitarianism's concepts, and provides a smoother result for animations in IE.
+It will also allow the stylesheet to be amended instead of the element.
 But I have not been able to work out setting the origin. Yet.
 #2 is based on Dylan's math, and works.
 If you can work out #1, we'll put your name in lights!
 
 3. Function Map:
+Transform: Element Transformation Class 
 initialize() Set browser-specific style prefix
 extendDOM(els) Extend DOM to include shortcut functions. [external]
 	//DOMMethod() Instance of generic extendDOM.
@@ -257,13 +264,17 @@ extendDOM(els) Extend DOM to include shortcut functions. [external]
 		[parseRule] If input is string, sends it to parseRule.
 		transform(el, transform, matrix, origin) Applies transform in real browsers.
 			ieTransform(el,entries,h,w) Applies transform in IE.
+			convert(value) converts length values to unitless pixel values (12px -> 12)
+
+CrossBrowser.Transform: Apply Transforms To Stylesheets.
 parseStyles() Parse Stylesheets. [external]
-	loadStylesheets() Load stylesheets for parsing [parent]
-		parse(css,sheet) parse one stylsheet.
-			stripComments(content, type) Remove comments from stylesheets. [parent]
-			parseRule(rule, browser) Parses -moz-transform stylerules. Returns the matrix/style of multiple rules.
+	loadStylesheets() Load stylesheets for parsing. [CrossBrowser Class]
+		parse(css,sheet) parse one stylsheet. [CrossBrowser Class]
+			stripComments(content, type) Remove comments from stylesheets. [CrossBrowser Class]
+			parseRule(rule, browser) Parses -moz-transform stylerules. Returns the matrix/style of multiple rules.[Transform Class]
+				parseObj: Array of styles to find, methods to apply.
 				[getMatrix]
-	ieLoop() Loop through all IE styles. [parent]
+	ieLoop() Loop through all IE styles. [CrossBrowser Class]
 		loopMethod(el,rule) Adds parsed rule to stylesheet. Instance of generic ieLoop.
 			[parseRule]
 convert() [parent]
