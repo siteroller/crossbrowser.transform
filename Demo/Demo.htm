@@ -8,7 +8,10 @@
 		window.addEvent('domready', function(){
 			new Transform().extendDOM();
 			
-			var transforms = {skew:'15,15', skewX:'15, [0,0]', skewY:'15, [0,0]', translate:'15, 15', translateX:15, translateY:15, scale:2, scaleX:2, scaleY:2, rotate:'45, [0,0]', transform:'rotate(20deg) translate(15px,0) skewX(45deg)', matrix:135};
+			var transforms = {skew:'15,15', skewX:'15, [0,0]', skewY:'15, [0,0]', translate:'15, 15'
+							, translateX:15, translateY:15, scale:2, scaleX:2, scaleY:2, rotate:'45, [0,0]'
+							, transform:'rotate(20deg) translate(15px,0) skewX(45deg)', matrix:'[1.2,.5,.2,-1]'
+			};
 			var p = $('p'), body = $$('body')[0], i=-1;
 			Object.each(transforms, function(val,transform){
 				var styles = {styles:{top:100+((++i/3).floor()*300), left:100+(i%3)*300}}
@@ -31,8 +34,6 @@
 				
 				body.adopt( new Element('div', styles).adopt(back, img, form) );
 			})
-			// var val = this.get('value').match(/^(?:(\d+)|(\[(?:\s*\d+\s*,){3,5}\s*\d+\s*\]))(?:,\s*(\d+)\s*)?(?:,\s*\[\s*(\d+)\s*,\s*(\d+)\s*\])?/);				
-			// sign[transform]((val[1]||val[2].split(',')),val[3],[val[4],val[5]]);
 		});
 	</script>
 	<style type='text/css'>
@@ -45,5 +46,6 @@
 	</style>
 </head>
 <body>
+For the curious, the model is a good friend and part of our family, <a href='http://www.facebook.com/people/Yehuda-Gottesman/100000721930126'>Yehuda</a>.
 </body>
 </html>
