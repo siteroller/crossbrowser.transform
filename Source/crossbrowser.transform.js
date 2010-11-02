@@ -126,9 +126,9 @@ var Transform = new Class({
 		}
 		
 		return {
-			scale:[x, 0, 0, y, 0, 0]
-			, skew:[1, y, x, 1, 0, 0]
-			, rotate:[y, x, -x, y, 0, 0]
+			scale:[x, 0, 0, y]
+			, skew:[1, y, x, 1]
+			, rotate:[y, x, -x, y]
 			, translate:[1, 0, 0, 1, x, y]
 			// ToDo; Not part of W3C spec.
 			, squeeze: [x, 0, 0, 1/x]
@@ -208,12 +208,12 @@ Transform.implement({
 		
 		var x = el.clientWidth / 2 - origin[0]
 			, y = el.clientHeight / 2 - origin[1]
-			, left = x * matrix[0] + y * matrix[2] + origin[0] + matrix[4] - el.offsetWidth / 2
-			, top = x * matrix[1] + y * matrix[3] + origin[1] + matrix[5] - el.offsetHeight / 2;
+			, left = x * matrix[0] + y * matrix[2] + origin[0] + (matrix[4]||0) - el.offsetWidth / 2
+			, top = x * matrix[1] + y * matrix[3] + origin[1] + (matrix[5]||0) - el.offsetHeight / 2;
 		
 		el.style.left = left;
 		el.style.top = top;
-		
+	
 		if (false) var originMarker = new Element('div',{styles:{position:'absolute', width:3, height:3, 'background-color':'red', top:origin[0]-1, left:origin[1]-1, 'line-height':1, overflow:'hidden'}}).inject(el);
 	}
 });
@@ -223,7 +223,7 @@ CrossBrowser.Transform = new Class({
 	Implements: [Transform, CrossBrowser]
 	
 	, parseStyles: function(){
-		if (Browser.ie) ieLoop(); // Only IE reads unrecognized styles.
+		if (Browser.ie) this.ieLoop(); // Only IE reads unrecognized styles.
 		else if (!Browser.firefox) this.loadStylesheets(); // FF doesn't need parsing. No External Stylesheets.
 	}
 	, parseObj: [ [1, /transform(?!-)/i, 'parseRule']
@@ -231,7 +231,7 @@ CrossBrowser.Transform = new Class({
 	]
 	, loopMethod: function(el,rule){
 		var matrix = this.parseRule(rule);
-		document.styleSheets[0].insertRule(style[1], this.ieTransform(el, matrix)); // ieTransform should be reworked to return a matrix to apply.
+		this.ieTransform(el, matrix);
 	}
 });
 
