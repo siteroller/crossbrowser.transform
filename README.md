@@ -2,29 +2,31 @@ CrossBrowser.Transform
 ===========
 
 Hassle free transforms for every browser!
-No dependencies. Super light (Transform.js < 2KB). 
+No dependencies. Super light (Transform.js < 4KB). 
 
 Includes two classes:
 
 ### Transform:
 
-Methods for rotating, skewing, scaling, and more.
-Extend the DOM to make these available to every element.
+Methods for rotating, skewing, scaling, and more.  
+Extends the DOM to make these available to every element.
 
 ### CrossBrowser.Transform
 
 Parse all stylesheets and silently correct any transforms it finds.
 
-![Screenshot]('Demo/screenshots/rotate1.png')
+![Screenshot]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png')
 
 How to use
 ----------
 
 1. Include Mootools and CrossBrowser.Transform.js  
-    `<script src='Mootools.js'></script>`  
-    `<script src='CrossBrowser.Transform.js'></script>`
+
+        <script src='Mootools.js'></script>  
+        <script src='CrossBrowser.Transform.js'></script>
 2. Create an instance of the class.  
-    `var transform = new CrossBrowser.Transform();`
+
+        var transform = new CrossBrowser.Transform();
 3. Fix stylesheets.
 stylesheets - (element selector): Stylesheet to fix. Optional, defaults to all except those with the class of 'non-crossbrowser'.  
         
@@ -92,9 +94,9 @@ If you do not need to fix stylesheets, you can include and call the Transform cl
 Screenshots
 -----------
 
-![Matrix]('Demo/screenshots/matrix1.png')
-![Skew]('Demo/screenshots/skew1.png')
-![Rotate]('Demo/screenshots/rotate1.png')
+![Matrix]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/matrix1.png')
+![Skew]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/skew1.png')
+![Rotate]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png')
 
 ## Community
 The Transform was devised as part of the [CrossBrowser.js project](http://siteroller.net/404).
