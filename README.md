@@ -15,7 +15,7 @@ Extends the DOM to make these available to every element.
 
 Parse all stylesheets and silently correct any transforms it finds.
 
-![Screenshot]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png')
+![Screenshot](https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png)
 
 How to use
 ----------
@@ -79,8 +79,8 @@ Elements are extended with the following methods:
   b d f  
   eg: `$('el').scale([1,0,0,1,1,0]);`
 
-All methods accept an optional argument:
-origin - (array): An [x,y] coordinate to use as the elements origin. 
+All methods accept an optional argument:  
+origin - (array): An [x,y] coordinate to use as the elements origin.  
 eg: `$('el').rotate(45, [50,50]);`
   
 There are other transforms such as reflection that may work, but no guarantees for now.
@@ -94,9 +94,9 @@ If you do not need to fix stylesheets, you can include and call the Transform cl
 Screenshots
 -----------
 
-![Matrix]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/matrix1.png')
-![Skew]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/skew1.png')
-![Rotate]('https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png')
+![Matrix](https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/matrix1.png)
+![Skew](https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/skew1.png)
+![Rotate](https://github.com/siteroller/crossbrowser.transform/raw/develop/Demo/screenshots/rotate1.png)
 
 ## Community
 The Transform was devised as part of the [CrossBrowser.js project](http://siteroller.net/404).
@@ -125,8 +125,3 @@ They *are* in IE, which is good, because that is the main offender. :)
 IE9 support will come as soon as you buy me a computer which supports it!
 		
 Special thanks to [Buriel Webwerx](http://burielwebwerx.com/) for their help with the website!
-
-## Other
-var transform = new Transform();
-* If you are not parsing the DOM, you can include the Transform class alone.
-		
