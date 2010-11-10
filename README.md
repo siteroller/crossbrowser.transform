@@ -2,7 +2,7 @@ CrossBrowser.Transform
 ===========
 
 Hassle free transforms for every browser!
-No dependencies. Super light (Transform.js < 4KB). 
+No dependencies. Super light (&lt; 4KB). 
 
 Includes two classes:
 
@@ -28,7 +28,7 @@ How to use
 
         var transform = new CrossBrowser.Transform();
 3. Fix stylesheets.
-stylesheets - (element selector): Stylesheet to fix. Optional, defaults to all except those with the class of 'non-crossbrowser'.  
+stylesheets - (CSS selector): Stylesheet to fix. Optional, defaults to all except those with the class of 'non-crossbrowser'.  
         
 		transform.parseStyles([stylesheets]);
         // Fixes 
@@ -39,7 +39,7 @@ stylesheets - (element selector): Stylesheet to fix. Optional, defaults to all e
            } 
         </style>
 4. AND/OR Extend the DOM with methods described below.
-elements - (element selector). Elements to extend. Optional, defaults to all.  
+elements - (CSS selector). Elements to extend. Optional, defaults to all.  
 
         transform.extendDOM([elements]);   
         $('myElement').rotate(45); // rotates element 45 degrees.
@@ -113,15 +113,16 @@ Issues? Ideas? Wanna Join? [We need help!]
     - As I have no control over the state of the forge page, the info and downloads on this page may be out of date.
  - Or email us:
 
-        var name = "CrossBrowser.Transform";
-        var company = "siteroller.net";
+        var name = "siteroller+CrossBrowser";
+        var company = "gmail.com";
         var email = name + '@' + company;
         // There's gotta be a better way to keep spammers at bay, no?!
 
 ## Issues
-* External stylesheets are not parsed in Webkit and Opera.  
+* -wontfix- External stylesheets are not parsed in Webkit and Opera.  
 They *are* in IE, which is good, because that is the main offender. :)
-* No support for older version of Firefox < 3.5 or IE9 Beta.  
-IE9 support will come as soon as you buy me a computer which supports it!
+* -wontfix- No support for older version of Firefox < 3.5 or IE9 Beta.  
+* -wontfix- Transformed elements in IE become positioned, and may lose text anti-aliasing.
+* IE9 support will come as soon as you buy me a computer which supports it!
 		
 Special thanks to [Buriel Webwerx](http://burielwebwerx.com/) for their help with the website!

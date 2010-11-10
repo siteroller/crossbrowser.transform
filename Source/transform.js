@@ -13,9 +13,7 @@ credits:
 */
 var Transform = new Class({
 	
-	Implements: CrossBrowser
-	
-	, initialize: function(){
+	initialize: function(){
 		this.pre = {chrome:'-webkit',safari:'-webkit', opera:'-o',firefox:'-moz'}[Browser.name];
 	}
 	, extendDOM: function(els){
@@ -82,7 +80,7 @@ var Transform = new Class({
 	, transform: function(el, transform, matrix, origin){
 		if (!this.pre) return this.ieTransform(el, matrix, origin);
 		origin = origin || [50,50];
-		if (el.style.position == 'static') el.setStyle('position','relative');//el.getStyle('position')
+		if (el.style.position == 'static') el.setStyle('position','relative');
 		el.setStyle(this.pre + '-transform', transform == 'transform' ? matrix : transform + '(' + matrix + ')');
 		el.setStyle(this.pre + '-transform-origin', origin[0] + 'px ' + origin[1] + 'px');
 	}
@@ -112,9 +110,9 @@ var Transform = new Class({
 	, parseRule: function(rule){
 		// Parses -moz-transform stylerules.
 		if (Browser.firefox) return rule;
-		if (this.pre == '-webkit')
-			// Remove the '%','em','px' from tx & ty. FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
-			return rule.replace(/(matrix\s*\((?:\s*[-\.\d]+\s*,){4})(\s*\d+)[^,]*,(\s*\d+)[^)]*\)/gi, '$1$2,$3)');
+		if (this.pre == '-webkit' || Browser.Opera)
+			return rule.replace(/(matrix\s*\((?:[^,]+,){4})([^,]+),([^)]+)/gi, '$10,0) translate($2,$3)');
+			// Move linear elements into their own rule. In Matrix, FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
 		var style
 			, a = [1,0,0,1,0,0]
 			, reg = /([^(]+)\(([^)]*)\)/gi;
@@ -142,7 +140,8 @@ var Transform = new Class({
 Transform.implement({
 	
 	ieTransform: function(el, matrix, origin){
-		origin = origin || [50,50];
+		origin = origin || ['50%','50%'];
+		this.convert(origin[0],origin[1]);
 		el.setStyle(
 			Browser.ie6 ? 'filter' : '-ms-filter',
 			'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]})
