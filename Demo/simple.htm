@@ -1,0 +1,27 @@
+<!doctype>
+<html>
+<head>
+	<title>CrossBrowser.Transform Demo</title>
+	<script type="text/javascript" src="moo.13.js"></script>
+	<script type="text/javascript" src="../Compressed/crossbrowser.transform.js"></script>
+	<script>
+		window.addEvent('domready', function(){
+			var transforms = new CrossBrowser.Transform().parseStyles();
+			//var transforms1 = new Transform().extendDOM();
+			//$('rot').rotate(25).rotate(45,[0,0]).translate(50).scaleX(2).skewY(35).transform('rotate(135deg) translate(12px)').matrix([0,-1,1,0,0,12], [50,100]);
+		});
+	</script>
+	<style type='text/css'>
+		.back { background-color:yellow; }
+		div{ height:100px; width:200px; position:absolute; top:0; left:0; }
+		#rot { background-color:blue; -moz-transform-origin:50px 50px; -moz-transform:rotate(135deg) translate(12px); -moz-transform-origin:50px 50px; background-color:blue;} 
+		/* #rot { background-color:blue; -moz-transform:rotate(135deg) translate(12px); -moz-transform-origin:50px 50px} */
+	</style> 
+</head>
+<body>
+	<div style='top:150px; left:150px'>
+		<div class='back'></div>
+		<div id='rot'>This Way Up</div>
+	</div>
+</body>
+</html>
