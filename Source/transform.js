@@ -132,7 +132,8 @@ var Transform = new Class({
 		return a;
 	}
 	, convert: function(num,el){
-		snum = num.trim().split(/(\d+)/);
+		if (Type.isArray(num)) return num.map(parseFloat);
+		var snum = num.trim().split(/(\d+)/);
 		return parseFloat(num);
 	}
 });
@@ -140,8 +141,7 @@ var Transform = new Class({
 Transform.implement({
 	
 	ieTransform: function(el, matrix, origin){
-		origin = origin || ['50%','50%'];
-		this.convert(origin[0],origin[1]);
+		origin = this.convert(origin || ['50%','50%']);
 		el.setStyle(
 			Browser.ie6 ? 'filter' : '-ms-filter',
 			'progid:DXImageTransform.Microsoft.Matrix(M11={a}, M12={c}, M21={b}, M22={d}, SizingMethod="auto expand")'.substitute({a:matrix[0],b:matrix[1],c:matrix[2],d:matrix[3]})

@@ -29,10 +29,11 @@
 								 : JSON.decode('['+val+']',true);
 							img[transform](val[0],val[1],val[2]);
 						}
-					}}).fireEvent('click')
+					}})
 				  , form = new Element('p', {styles:{'background-color':'#ddd'}, html:'$("myEl").' + transform + '('}).adopt(input, paren, go);
 				
 				body.adopt( new Element('div', styles).adopt(back, img, form) );
+				go.fireEvent('click');
 			})
 		});
 	</script>
