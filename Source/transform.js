@@ -39,7 +39,7 @@ var Transform = new Class({
 		if (t == 'transform') return this.parseRule(x);
 		if (t == 'matrix'){
 			var suf = Browser.firefox ? 'px' : 0;
-			return [x[0], x[2], x[1], x[3], x[4]||0 + suf, x[5]||0 + suf];
+			return [x[0], x[1], x[2], x[3], x[4]||0 + suf, x[5]||0 + suf];
 		}
 		if (this.pre) return x + unit + (y ? ',' + y + unit : '');
 		
@@ -65,6 +65,10 @@ var Transform = new Class({
 			y = (y * rad).tan();
 		}
 		
+		// Makes fractions more readable & zeros obvious for debugging.
+		x = Math.round(x * 100000) / 100000;
+		y = Math.round(y * 100000) / 100000;
+
 		return {
 			scale:[x, 0, 0, y]
 			, skew:[1, y, x, 1]
@@ -114,21 +118,29 @@ var Transform = new Class({
 			return rule.replace(/(matrix\s*\((?:[^,]+,){4})([^,]+),([^)]+)/gi, '$10,0) translate($2,$3)');
 			// Move linear elements into their own rule. In Matrix, FF uses <length>, webkit [and opera?] use unitless <number>s: https://developer.mozilla.org/En/CSS/-moz-transform
 		var style
-			, a = [1,0,0,1,0,0]
-			, reg = /([^(]+)\(([^)]*)\)/gi;
-			
+		  , a = [1,0,0,1,0,0]
+		  , reg = /([^(]+)\(([^)]*)\)/gi;
+		  //, con = $('console')
+		
 		while (style = reg.exec(rule)){
 			var transform = style[1].trim()
-				, t = style[2].split(/\s*,\s*/).map(this.convert)
-				, b = this.getMatrix(transform, t[0], t[1]);
-			a = [ a[1] * b[2] + a[0] * b[0]
-				, a[2] * b[0] + a[3] * b[2]
-				, a[0] * b[1] + a[1] * b[3]
-				, a[2] * b[1] + a[3] * b[3]
-				, a[0] * b[4] + a[1] * b[5] + a[4]
-				, a[2] * b[4] + a[3] * b[5] + a[5]
+			  , t = style[2].split(/\s*,\s*/).map(this.convert)
+			  , b = this.getMatrix(transform, t[0], t[1]);
+
+			//con.value += 'a(old): '+ a +'\ngetMatrix('+transform+','+t[0]+(t[1]?','+t[1]:'')+');\nb: '+ b +'\n';	
+			if (!b[4]) b[4] = 0;
+			if (!b[5]) b[5] = 0;
+			
+			a = [ a[2] * b[1] + a[0] * b[0]
+				, a[1] * b[0] + a[3] * b[1]
+				, a[0] * b[2] + a[2] * b[3]
+				, a[1] * b[2] + a[3] * b[3]
+				, a[0] * b[4] + a[2] * b[5] + a[4]
+				, a[1] * b[4] + a[3] * b[5] + a[5]
 			];
+			//con.value += 'a(new): '+ a+'\n';
 		}
+		//con.value += '\n----------\n';	
 		return a;
 	}
 	, convert: function(num,el){
