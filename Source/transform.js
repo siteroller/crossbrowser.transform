@@ -39,7 +39,7 @@ var Transform = new Class({
 		if (t == 'transform') return this.parseRule(x);
 		if (t == 'matrix'){
 			var suf = Browser.firefox ? 'px' : 0;
-			return [x[0], x[1], x[2], x[3], x[4]||0 + suf, x[5]||0 + suf];
+			return [x[0], x[2], x[1], x[3], x[4]||0 + suf, x[5]||0 + suf];
 		}
 		if (this.pre) return x + unit + (y ? ',' + y + unit : '');
 		
